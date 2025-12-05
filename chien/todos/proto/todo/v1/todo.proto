@@ -1,0 +1,33 @@
+// todo.proto — Todos Service Protocol Buffer Definition
+//
+// Week 2: gRPC & Protobuf
+//
+// This file defines the gRPC service contract:
+// 1. Define the TodosService with RPC methods:
+//    - GetTodo(GetTodoRequest) returns (Todo)
+//    - ListTodos(ListTodosRequest) returns (ListTodosResponse)
+//    - CreateTodo(CreateTodoRequest) returns (Todo)
+//    - UpdateTodo(UpdateTodoRequest) returns (Todo)
+//    - DeleteTodo(DeleteTodoRequest) returns (google.protobuf.Empty)
+//
+// 2. Define message types:
+//    - Todo message (name, title, content, status, timestamps)
+//    - Request/Response messages for each RPC
+//    - TodoStatus enum (TODO, IN_PROGRESS, DONE)
+//
+// 3. Use resource name pattern for identifiers:
+//    - GetTodoRequest { string name = 1; }
+//    - name format: "users/{user_id}/todo-lists/{list_id}/todos/{todo_id}"
+//
+// After editing this file, run: make generate
+// This generates Go code in the same package that your handler implements.
+//
+// See: resources/week-02-grpc-protobuf.md (protobuf definitions, resource names)
+
+syntax = "proto3";
+
+package todo.v1;
+
+option go_package = "github.com/example/todos/proto/todo/v1;todov1";
+
+// TODO: Define your service and messages here

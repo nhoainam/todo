@@ -1,0 +1,30 @@
+# schema.graphqls — GraphQL Schema Definition
+#
+# Phase 3: GraphQL & BFF Pattern
+#
+# This file defines the GraphQL API contract:
+# 1. Define the Query type with root queries:
+#    - todo(name: ResourceName!): Todo
+#    - todos(listName: ResourceName!, first: Int, after: String): TodoConnection
+#
+# 2. Define the Mutation type:
+#    - createTodo(input: CreateTodoInput!): Todo!
+#    - updateTodo(input: UpdateTodoInput!): Todo!
+#    - deleteTodo(name: ResourceName!): Payload! @hasPermission(permissions: [TODO_DELETE])
+#
+# 3. Define object types:
+#    - Todo (name, title, content, status, creator, todoList, createdAt, updatedAt)
+#    - TodoConnection (edges, pageInfo) — for pagination
+#    - Payload (success)
+#
+# 4. Define custom scalars:
+#    - ResourceName — "users/{id}/todo-lists/{id}/todos/{id}"
+#    - Time — RFC3339 timestamp
+#
+# 5. Define directives:
+#    - @hasPermission(permissions: [Permission!]!) on FIELD_DEFINITION
+#
+# After editing this file, run: make generate
+# This generates resolvers and models that you implement.
+#
+# See: resources/phase-03-graphql-bff.md (GraphQL schema, directives, scalars)

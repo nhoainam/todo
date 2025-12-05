@@ -1,0 +1,111 @@
+name: Auto Review Fresher PRs
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'chien/**'
+      - 'nghia/**'
+      - 'nam/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  auto-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR info
+        id: pr-info
+        run: |
+          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+
+      - name: Determine fresher from changed files
+        id: fresher
+        run: |
+          CHANGED_FILES=$(gh pr diff ${{ github.event.pull_request.number }} --name-only)
+          if echo "$CHANGED_FILES" | grep -q "^chien/"; then
+            echo "name=chien" >> $GITHUB_OUTPUT
+          elif echo "$CHANGED_FILES" | grep -q "^nghia/"; then
+            echo "name=nghia" >> $GITHUB_OUTPUT
+          elif echo "$CHANGED_FILES" | grep -q "^nam/"; then
+            echo "name=nam" >> $GITHUB_OUTPUT
+          else
+            echo "name=unknown" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Claude auto-review
+        id: review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this pull request for fresher "${{ steps.fresher.outputs.name }}".
+
+            ## Review Instructions
+
+            You are reviewing a training PR from a Go fresher learning Clean Architecture.
+            Review against these criteria and provide TWO scores:
+
+            ### Convention Score (1-10)
+            Check these coding conventions:
+            - [ ] Files are in the correct Clean Architecture layer
+            - [ ] Handler follows 5-step pattern (Parse → Build Input → Validate → Execute → Map Response)
+            - [ ] Gateway separates Commands (write) and Queries (read)
+            - [ ] Unit tests use table-driven pattern
+            - [ ] IDs use strong types (TodoID, UserID, TodoListID)
+            - [ ] Error handling uses AppError (NewNotFound, NewInvalidParameter, etc.)
+            - [ ] Wire DI setup is correct
+            - [ ] Naming follows conventions ({Entity}CommandsGateway, {Action}{Entity})
+
+            ### Understanding Score (1-10)
+            Check the "Explain Your Decisions" section in the PR description:
+            - Are the explanations accurate?
+            - Do they show understanding of WHY, not just WHAT?
+            - Do they connect to architectural principles?
+            - If the section is empty or has only placeholders, score 0/10.
+
+            ### Output Format
+            Post your review as a comment with this structure:
+
+            ---
+            ## Auto-Review Summary
+
+            **Fresher**: {name}
+            **Convention Score**: X/10
+            **Understanding Score**: X/10
+
+            ### Issues Found
+            - [structure] issue description — file:line
+            - [pattern] issue description — file:line
+            - [convention] issue description — file:line
+            - [understanding] issue description
+
+            ### What's Good
+            - ...
+
+            ### Suggestions
+            - ...
+
+            > Hint: Check resources/review-questions/ for understanding questions.
+            ---
+
+            IMPORTANT: Follow the training rules — give HINTS, not full solutions.
+            Do not write code for the fresher. Point them to the right resources.
+
+      - name: Post review comment
+        if: steps.review.outputs.comment
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body "${{ steps.review.outputs.comment }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
