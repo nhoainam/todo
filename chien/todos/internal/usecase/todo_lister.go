@@ -2,7 +2,7 @@ package usecase
 
 // todo_lister.go — ListTodos Use Case
 //
-// Week 2: gRPC & Protobuf — UseCase Layer
+// Phase 1: gRPC & Protobuf — UseCase Layer
 //
 // This file is responsible for:
 // 1. Define the TodoLister interface
@@ -16,5 +16,5 @@ package usecase
 //   - List of todos
 //   - Pagination metadata (total count, has next page)
 //
-// See: resources/week-02-grpc-protobuf.md (use case pattern)
-// See: resources/week-03-gorm-wire.md (filter and pagination patterns)
+// See: resources/phase-01-architecture-grpc.md (use case pattern)
+// See: resources/phase-02-database-di.md (filter and pagination patterns)

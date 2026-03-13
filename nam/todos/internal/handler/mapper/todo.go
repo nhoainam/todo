@@ -2,7 +2,7 @@ package mapper
 
 // todo.go — Proto ↔ Domain Mapper
 //
-// Week 2: gRPC & Protobuf — Handler Layer
+// Phase 1: gRPC & Protobuf — Handler Layer
 //
 // This file is responsible for:
 // 1. Convert proto request messages to domain types:
@@ -28,4 +28,4 @@ package mapper
 //       }
 //   }
 //
-// See: resources/week-02-grpc-protobuf.md (mapper pattern, resource names)
+// See: resources/phase-01-architecture-grpc.md (mapper pattern, resource names)

@@ -1,3 +1,3 @@
 package mapper
 
-// Week 3: Domain ↔ GORM model mapper (convert between domain.Todo and model.Todo). See resources/week-03-gorm-wire.md
+// Phase 2: Domain ↔ GORM model mapper (convert between domain.Todo and model.Todo). See resources/phase-02-database-di.md

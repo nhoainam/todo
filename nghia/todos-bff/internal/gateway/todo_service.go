@@ -2,7 +2,7 @@ package gateway
 
 // todo_service.go — TodoService Gateway Interface
 //
-// Week 4: GraphQL & BFF Pattern
+// Phase 3: GraphQL & BFF Pattern
 //
 // This file defines the interface for communicating with the backend Todos gRPC service.
 //
@@ -17,4 +17,4 @@ package gateway
 // The implementation (in infra/grpc_client/) translates these calls
 // to actual gRPC requests to the backend service.
 //
-// See: resources/week-04-graphql-bff.md (gateway pattern in BFF)
+// See: resources/phase-03-graphql-bff.md (gateway pattern in BFF)

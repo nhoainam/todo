@@ -2,7 +2,7 @@ package main
 
 // main.go — BFF Application Entry Point
 //
-// Week 4: GraphQL & BFF Pattern
+// Phase 3: GraphQL & BFF Pattern
 //
 // This file is responsible for:
 // 1. Loading configuration from environment variables
@@ -19,8 +19,8 @@ package main
 // The BFF sits between frontend and backend services:
 //   Frontend → [BFF: HTTP/GraphQL] → [Backend: gRPC]
 //
-// See: resources/week-04-graphql-bff.md (BFF architecture, middleware chain)
-// See: resources/week-03-gorm-wire.md (Wire DI)
+// See: resources/phase-03-graphql-bff.md (BFF architecture, middleware chain)
+// See: resources/phase-02-database-di.md (Wire DI)
 
 func main() {
 	// TODO: Implement server initialization

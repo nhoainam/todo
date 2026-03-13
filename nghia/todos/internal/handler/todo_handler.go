@@ -2,7 +2,7 @@ package handler
 
 // todo_handler.go — gRPC Handler for Todos Service
 //
-// Week 2: gRPC & Protobuf — Handler Layer
+// Phase 1: gRPC & Protobuf — Handler Layer
 //
 // This file is responsible for:
 // 1. Define a struct that implements the gRPC TodosServiceServer interface
@@ -25,4 +25,4 @@ package handler
 // - Map AppError to gRPC status codes (NotFound → codes.NotFound, etc.)
 // - Parse resource names: "users/{user_id}/todo-lists/{list_id}/todos/{todo_id}"
 //
-// See: resources/week-02-grpc-protobuf.md (handler 5-step pattern, error mapping)
+// See: resources/phase-01-architecture-grpc.md (handler 5-step pattern, error mapping)

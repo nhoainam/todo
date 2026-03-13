@@ -2,7 +2,7 @@ package input
 
 // todo.go — Use Case Input DTOs
 //
-// Week 2: gRPC & Protobuf — UseCase Layer
+// Phase 1: gRPC & Protobuf — UseCase Layer
 //
 // This file is responsible for:
 // 1. Define input structs for each use case:
@@ -17,5 +17,5 @@ package input
 // - The handler converts proto → input DTO
 // - Use pointer fields for optional/partial updates (e.g., *string for Title in update)
 //
-// See: resources/week-01-clean-architecture.md (DTO pattern)
-// See: resources/week-02-grpc-protobuf.md (input/output DTOs)
+// See: resources/phase-01-architecture-grpc.md (DTO pattern)
+// See: resources/phase-01-architecture-grpc.md (input/output DTOs)

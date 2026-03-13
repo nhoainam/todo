@@ -1,3 +1,3 @@
 package persistence
 
-// Week 3: TodoQueriesGateway GORM implementation. See resources/week-03-gorm-wire.md
+// Phase 2: TodoQueriesGateway GORM implementation. See resources/phase-02-database-di.md

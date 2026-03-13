@@ -2,7 +2,7 @@ package usecase
 
 // todo_getter.go — GetTodo Use Case
 //
-// Week 2: gRPC & Protobuf — UseCase Layer
+// Phase 1: gRPC & Protobuf — UseCase Layer
 //
 // This file is responsible for:
 // 1. Define the TodoGetter interface with an Execute method
@@ -23,5 +23,5 @@ package usecase
 // - Depends on gateway INTERFACES (not implementations)
 // - Is independent of transport (no gRPC or HTTP knowledge)
 //
-// See: resources/week-02-grpc-protobuf.md (use case pattern)
-// See: resources/week-01-clean-architecture.md (dependency inversion)
+// See: resources/phase-01-architecture-grpc.md (use case pattern)
+// See: resources/phase-01-architecture-grpc.md (dependency inversion)

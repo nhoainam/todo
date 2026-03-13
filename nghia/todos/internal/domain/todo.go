@@ -2,7 +2,7 @@ package domain
 
 // todo.go — Todo Entity & Strong Types
 //
-// Week 1: Clean Architecture — Domain Layer
+// Phase 1: Clean Architecture — Domain Layer
 //
 // This file is responsible for:
 // 1. Define TodoID as a strong type (not raw string) — prevents mixing with other IDs
@@ -27,4 +27,4 @@ package domain
 //   type TodoID string
 //   func (id TodoID) String() string { return string(id) }
 //
-// See: resources/week-01-clean-architecture.md (strong typing, entity design)
+// See: resources/phase-01-architecture-grpc.md (strong typing, entity design)

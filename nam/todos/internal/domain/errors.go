@@ -2,7 +2,7 @@ package domain
 
 // errors.go — Application Error Types
 //
-// Week 1: Clean Architecture — Domain Layer
+// Phase 1: Clean Architecture — Domain Layer
 //
 // This file is responsible for:
 // 1. Define AppError struct with:
@@ -23,5 +23,5 @@ package domain
 //   NotFound → codes.NotFound, AuthZ → codes.PermissionDenied, etc.
 // - This keeps domain logic unaware of gRPC while still communicating error types
 //
-// See: resources/week-01-clean-architecture.md (error handling)
-// See: resources/week-02-grpc-protobuf.md (AppError → gRPC status mapping)
+// See: resources/phase-01-architecture-grpc.md (error handling)
+// See: resources/phase-01-architecture-grpc.md (AppError → gRPC status mapping)

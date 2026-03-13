@@ -2,7 +2,7 @@ package domain
 
 // todo.go — BFF Domain Types
 //
-// Week 4: GraphQL & BFF Pattern
+// Phase 3: GraphQL & BFF Pattern
 //
 // This file is responsible for:
 // 1. Define BFF-specific domain types (may mirror backend domain)
@@ -13,5 +13,5 @@ package domain
 // - Its types may differ slightly from backend (e.g., include computed fields)
 // - It maintains the same Clean Architecture principle: domain has no dependencies
 //
-// See: resources/week-04-graphql-bff.md (BFF architecture)
-// See: resources/week-01-clean-architecture.md (domain layer)
+// See: resources/phase-03-graphql-bff.md (BFF architecture)
+// See: resources/phase-01-architecture-grpc.md (domain layer)

@@ -2,7 +2,7 @@ package output
 
 // todo.go — Use Case Output DTOs
 //
-// Week 2: gRPC & Protobuf — UseCase Layer
+// Phase 1: gRPC & Protobuf — UseCase Layer
 //
 // This file is responsible for:
 // 1. Define output structs for each use case:
@@ -14,4 +14,4 @@ package output
 // Output DTOs can wrap domain entities directly since the domain
 // is the "innermost" layer. The handler then maps output → proto response.
 //
-// See: resources/week-01-clean-architecture.md (DTO pattern)
+// See: resources/phase-01-architecture-grpc.md (DTO pattern)

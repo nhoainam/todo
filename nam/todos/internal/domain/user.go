@@ -2,7 +2,7 @@ package domain
 
 // user.go — User Strong Type
 //
-// Week 1: Clean Architecture — Domain Layer
+// Phase 1: Clean Architecture — Domain Layer
 //
 // This file is responsible for:
 // 1. Define UserID as a strong type
@@ -15,4 +15,4 @@ package domain
 //   type UserID string
 //   func (id UserID) String() string { return string(id) }
 //
-// See: resources/week-01-clean-architecture.md (strong typing)
+// See: resources/phase-01-architecture-grpc.md (strong typing)

@@ -2,7 +2,7 @@ package graph
 
 // resolver.go — Root Resolver
 //
-// Week 4: GraphQL & BFF Pattern
+// Phase 3: GraphQL & BFF Pattern
 //
 // This file is responsible for:
 // 1. Define the Resolver struct that holds all use case dependencies:
@@ -19,4 +19,4 @@ package graph
 // The root resolver is the "composition root" for GraphQL.
 // Wire injects all dependencies into it.
 //
-// See: resources/week-04-graphql-bff.md (resolver pattern)
+// See: resources/phase-03-graphql-bff.md (resolver pattern)

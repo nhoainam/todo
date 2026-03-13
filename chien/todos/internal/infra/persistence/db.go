@@ -1,3 +1,3 @@
 package persistence
 
-// Week 3: Database connection setup (GORM initialization, DB-from-context pattern). See resources/week-03-gorm-wire.md
+// Phase 2: Database connection setup (GORM initialization, DB-from-context pattern). See resources/phase-02-database-di.md

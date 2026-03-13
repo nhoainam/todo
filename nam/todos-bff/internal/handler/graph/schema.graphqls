@@ -1,6 +1,6 @@
 # schema.graphqls — GraphQL Schema Definition
 #
-# Week 4: GraphQL & BFF Pattern
+# Phase 3: GraphQL & BFF Pattern
 #
 # This file defines the GraphQL API contract:
 # 1. Define the Query type with root queries:
@@ -27,4 +27,4 @@
 # After editing this file, run: make generate
 # This generates resolvers and models that you implement.
 #
-# See: resources/week-04-graphql-bff.md (GraphQL schema, directives, scalars)
+# See: resources/phase-03-graphql-bff.md (GraphQL schema, directives, scalars)

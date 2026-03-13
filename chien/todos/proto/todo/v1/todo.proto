@@ -1,6 +1,6 @@
 // todo.proto — Todos Service Protocol Buffer Definition
 //
-// Week 2: gRPC & Protobuf
+// Phase 1: gRPC & Protobuf
 //
 // This file defines the gRPC service contract:
 // 1. Define the TodosService with RPC methods:
@@ -22,7 +22,7 @@
 // After editing this file, run: make generate
 // This generates Go code in the same package that your handler implements.
 //
-// See: resources/week-02-grpc-protobuf.md (protobuf definitions, resource names)
+// See: resources/phase-01-architecture-grpc.md (protobuf definitions, resource names)
 
 syntax = "proto3";
 

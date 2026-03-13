@@ -1,8 +1,8 @@
-## Week & Exercise
+## Phase & Exercise
 
-<!-- Which week and exercise is this PR for? Example: Week 2 — BT3: Interceptor Analysis -->
+<!-- Which phase and exercise is this PR for? Example: Phase 1 — EX4: Interceptor Analysis -->
 
-**Week**:
+**Phase**:
 **Exercise**:
 
 ## What I Implemented
@@ -14,7 +14,7 @@
 ## Explain Your Decisions
 
 <!-- Pick 2-3 questions from the question bank for your exercise and answer them.
-     Question bank: resources/review-questions/week-XX.md (replace XX with your week number) -->
+     Question bank: resources/review-questions/phase-{N}.md (replace {N} with your phase number) -->
 
 ### Question 1:
 <!-- Your answer -->

@@ -2,7 +2,7 @@ package domain
 
 // todo_list.go — TodoList Entity & Strong Types
 //
-// Week 1: Clean Architecture — Domain Layer
+// Phase 1: Clean Architecture — Domain Layer
 //
 // This file is responsible for:
 // 1. Define TodoListID as a strong type
@@ -16,5 +16,5 @@ package domain
 // A TodoList groups multiple Todos together.
 // Resource name format: users/{user_id}/todo-lists/{list_id}
 //
-// See: resources/week-01-clean-architecture.md (entity design)
-// See: resources/week-02-grpc-protobuf.md (resource names)
+// See: resources/phase-01-architecture-grpc.md (entity design)
+// See: resources/phase-01-architecture-grpc.md (resource names)

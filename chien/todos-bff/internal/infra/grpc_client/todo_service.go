@@ -2,7 +2,7 @@ package grpc_client
 
 // todo_service.go — TodoService gRPC Client Implementation
 //
-// Week 4: GraphQL & BFF Pattern
+// Phase 3: GraphQL & BFF Pattern
 //
 // This file implements the TodoServiceGateway interface using a gRPC client.
 //
@@ -21,4 +21,4 @@ package grpc_client
 //       return mapper.TodoFromProto(resp), nil
 //   }
 //
-// See: resources/week-04-graphql-bff.md (gRPC client implementation)
+// See: resources/phase-03-graphql-bff.md (gRPC client implementation)

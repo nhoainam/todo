@@ -2,7 +2,7 @@ package graph
 
 // todo.resolvers.go — Todo Query & Mutation Resolvers
 //
-// Week 4: GraphQL & BFF Pattern
+// Phase 3: GraphQL & BFF Pattern
 //
 // This file is responsible for:
 // 1. Implement query resolvers:
@@ -26,4 +26,4 @@ package graph
 //       return dataloader.For(ctx).UserLoader.Load(ctx, obj.CreatorID)()
 //   }
 //
-// See: resources/week-04-graphql-bff.md (resolvers, field resolvers, DataLoader)
+// See: resources/phase-03-graphql-bff.md (resolvers, field resolvers, DataLoader)

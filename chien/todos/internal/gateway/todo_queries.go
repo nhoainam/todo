@@ -1,3 +1,3 @@
 package gateway
 
-// Week 3: TodoQueriesGateway interface — read operations (Get, List). See resources/week-03-gorm-wire.md
+// Phase 2: TodoQueriesGateway interface — read operations (Get, List). See resources/phase-02-database-di.md

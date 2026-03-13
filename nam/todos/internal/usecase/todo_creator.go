@@ -2,7 +2,7 @@ package usecase
 
 // todo_creator.go — CreateTodo Use Case
 //
-// Week 2: gRPC & Protobuf — UseCase Layer
+// Phase 1: gRPC & Protobuf — UseCase Layer
 //
 // This file is responsible for:
 // 1. Define the TodoCreator interface
@@ -21,5 +21,5 @@ package usecase
 // while the getter depends on TodoQueriesGateway (read).
 // This is the Commands/Queries separation pattern.
 //
-// See: resources/week-02-grpc-protobuf.md (use case pattern)
-// See: resources/week-03-gorm-wire.md (gateway Commands/Queries separation)
+// See: resources/phase-01-architecture-grpc.md (use case pattern)
+// See: resources/phase-02-database-di.md (gateway Commands/Queries separation)
