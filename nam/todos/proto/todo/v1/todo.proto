@@ -28,6 +28,77 @@ syntax = "proto3";
 
 package todo.v1;
 
-option go_package = "github.com/example/todos/proto/todo/v1;todov1";
+option go_package = "github.com/tuannguyenandpadcojp/fresher26/nam/todos/proto/todo/v1;todov1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
 
 // TODO: Define your service and messages here
+
+enum TodoStatus {
+    UNSPECIFIED = 0;  
+    PENDING     = 1;
+    IN_PROGRESS = 2;
+    DONE        = 3;
+}
+
+message Todo {
+    string name = 1;
+    string title = 2;
+    string content = 3;
+    TodoStatus status = 4;
+    google.protobuf.Timestamp due_date   = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+} 
+
+message GetTodoRequest {
+    string name = 1;
+}
+
+message GetTodoResponse {
+    Todo todo = 1;
+}
+
+message ListTodosRequest {
+    string parent = 1;
+    optional TodoStatus status = 2;
+    int32 limit = 3;
+    int32 offset = 4;
+}
+
+message ListTodosResponse {
+    repeated Todo todos = 1;
+}
+
+message CreateTodoRequest {
+    string parent = 1;
+    Todo todo = 2;
+}
+
+message CreateTodoResponse {
+    Todo todo = 1;
+}
+
+message UpdateTodoRequest {
+    Todo todo = 1;
+    google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateTodoResponse {
+    Todo todo = 1;
+}
+
+message DeleteTodoRequest {
+    string name = 1;
+}
+
+
+service TodosService {
+    rpc GetTodo(GetTodoRequest) returns (GetTodoResponse);
+    rpc ListTodos(ListTodosRequest) returns (ListTodosResponse);
+    rpc CreateTodo(CreateTodoRequest) returns (CreateTodoResponse);
+    rpc UpdateTodo(UpdateTodoRequest) returns (UpdateTodoResponse);
+    rpc DeleteTodo(DeleteTodoRequest) returns (google.protobuf.Empty);
+}

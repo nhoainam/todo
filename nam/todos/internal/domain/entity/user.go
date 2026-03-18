@@ -1,4 +1,4 @@
-package domain
+package entity
 
 // user.go — User Strong Type
 //
@@ -16,3 +16,7 @@ package domain
 //   func (id UserID) String() string { return string(id) }
 //
 // See: resources/phase-01-architecture-grpc.md (strong typing)
+
+type UserID int64
+
+func (id UserID) Int64() int64 { return int64(id) }

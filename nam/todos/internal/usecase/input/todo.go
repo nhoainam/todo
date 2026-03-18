@@ -1,5 +1,11 @@
 package input
 
+import (
+	"time"
+
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/entity"
+)
+
 // todo.go — Use Case Input DTOs
 //
 // Phase 1: gRPC & Protobuf — UseCase Layer
@@ -19,3 +25,32 @@ package input
 //
 // See: resources/phase-01-architecture-grpc.md (DTO pattern)
 // See: resources/phase-01-architecture-grpc.md (input/output DTOs)
+
+type TodoGetter struct {
+	Name entity.TodoResourceName
+}
+
+type TodoCreator struct {
+	Title     string
+	Content   string
+	DueDate   *time.Time
+	ListID    entity.TodoListID
+	CreatorID entity.UserID
+}
+
+type TodoUpdater struct {
+	Name    entity.TodoResourceName
+	Title   *string
+	Content *string
+	Status  *entity.TodoStatus
+	DueDate *time.Time
+}
+
+type TodoDeleter struct {
+	Name entity.TodoResourceName
+}
+
+type TodoLister struct {
+	Name   entity.TodoResourceName
+	Status *entity.TodoStatus
+}

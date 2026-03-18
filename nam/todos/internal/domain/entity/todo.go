@@ -1,4 +1,6 @@
-package domain
+package entity
+
+import "time"
 
 // todo.go — Todo Entity & Strong Types
 //
@@ -28,3 +30,41 @@ package domain
 //   func (id TodoID) String() string { return string(id) }
 //
 // See: resources/phase-01-architecture-grpc.md (strong typing, entity design)
+
+type TodoID int64
+
+func (id TodoID) Int64() int64 { return int64(id) }
+
+type TodoStatus string
+
+const (
+	TodoStatusPENDING     TodoStatus = "PENDING"
+	TodoStatusIN_PROGRESS TodoStatus = "IN_PROGRESS"
+	TodoStatusDONE        TodoStatus = "DONE"
+)
+
+type Todo struct {
+	ID        TodoID
+	ListID    TodoListID
+	CreatorID UserID
+	Title     string
+	Content   string
+	Status    TodoStatus
+	DueDate   *time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// IsOverdue checks if the todo item is past its due date and not done.
+func (t *Todo) IsOverdue() bool {
+	if t.DueDate == nil || t.Status == TodoStatusDONE {
+		return false
+	}
+	return time.Now().After(*t.DueDate)
+}
+
+// MarkDone sets the status to DONE and updates the timestamp.
+func (t *Todo) MarkDone() {
+	t.Status = TodoStatusDONE
+	t.UpdatedAt = time.Now()
+}

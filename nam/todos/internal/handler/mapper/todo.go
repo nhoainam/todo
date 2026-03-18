@@ -1,5 +1,14 @@
 package mapper
 
+import (
+	"fmt"
+	"time"
+
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/entity"
+	todov1 "github.com/tuannguyenandpadcojp/fresher26/nam/todos/proto/todo/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
 // todo.go — Proto ↔ Domain Mapper
 //
 // Phase 1: gRPC & Protobuf — Handler Layer
@@ -29,3 +38,38 @@ package mapper
 //   }
 //
 // See: resources/phase-01-architecture-grpc.md (mapper pattern, resource names)
+
+func statusToPb(status entity.TodoStatus) todov1.TodoStatus {
+	switch status {
+	case entity.TodoStatusPENDING:
+		return todov1.TodoStatus_PENDING
+	case entity.TodoStatusDONE:
+		return todov1.TodoStatus_DONE
+	case entity.TodoStatusIN_PROGRESS:
+		return todov1.TodoStatus_IN_PROGRESS
+	default:
+		return todov1.TodoStatus_UNSPECIFIED
+	}
+}
+
+func ToProtoTime(t *time.Time) *timestamppb.Timestamp {
+	if t == nil {
+		return nil
+	}
+	return timestamppb.New(*t)
+}
+
+func TodoToPb(t *entity.Todo) *todov1.Todo {
+	if t == nil {
+		return nil
+	}
+	return &todov1.Todo{
+		Name:      fmt.Sprintf("users/%d/todo-lists/%d/todos/%d", t.CreatorID, t.ListID, t.ID),
+		Title:     t.Title,
+		Content:   t.Content,
+		Status:    statusToPb(t.Status),
+		DueDate:   ToProtoTime(t.DueDate),
+		CreatedAt: ToProtoTime(&t.CreatedAt),
+		UpdatedAt: ToProtoTime(&t.UpdatedAt),
+	}
+}

@@ -1,5 +1,12 @@
 package usecase
 
+import (
+	"context"
+
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase/input"
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase/output"
+)
+
 // todo_getter.go — GetTodo Use Case
 //
 // Phase 1: gRPC & Protobuf — UseCase Layer
@@ -7,12 +14,13 @@ package usecase
 // This file is responsible for:
 // 1. Define the TodoGetter interface with an Execute method
 // 2. Define todoGetterImpl struct that holds gateway dependencies:
-//    - TodoQueriesGateway (for reading from DB)
+//   - TodoQueriesGateway (for reading from DB)
+//
 // 3. Define NewTodoGetter constructor (used by Wire for DI)
 // 4. Implement Execute method with business logic:
-//    - Receive input DTO (input.TodoGetter)
-//    - Call gateway to fetch the todo
-//    - Return output DTO (output.TodoGetter) or AppError
+//   - Receive input DTO (input.TodoGetter)
+//   - Call gateway to fetch the todo
+//   - Return output DTO (output.TodoGetter) or AppError
 //
 // Naming convention: use cases are named as {Action}{Entity}
 //   - TodoGetter (not GetTodoUseCase)
@@ -25,3 +33,6 @@ package usecase
 //
 // See: resources/phase-01-architecture-grpc.md (use case pattern)
 // See: resources/phase-01-architecture-grpc.md (dependency inversion)
+type TodoGetter interface {
+	Get(ctx context.Context, in *input.TodoGetter) (*output.TodoGetter, error)
+}

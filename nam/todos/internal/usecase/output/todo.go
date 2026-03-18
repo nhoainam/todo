@@ -1,5 +1,7 @@
 package output
 
+import "github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/entity"
+
 // todo.go — Use Case Output DTOs
 //
 // Phase 1: gRPC & Protobuf — UseCase Layer
@@ -15,3 +17,19 @@ package output
 // is the "innermost" layer. The handler then maps output → proto response.
 //
 // See: resources/phase-01-architecture-grpc.md (DTO pattern)
+
+type TodoGetter struct {
+	Todo *entity.Todo
+}
+
+type TodoCreator struct {
+	Todo *entity.Todo
+}
+
+type TodoUpdater struct {
+	Todo *entity.Todo
+}
+
+type TodoLister struct {
+	Todos []*entity.Todo
+}

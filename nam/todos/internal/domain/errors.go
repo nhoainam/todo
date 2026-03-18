@@ -1,4 +1,4 @@
-package domain
+package apperrors
 
 // errors.go — Application Error Types
 //
@@ -25,3 +25,57 @@ package domain
 //
 // See: resources/phase-01-architecture-grpc.md (error handling)
 // See: resources/phase-01-architecture-grpc.md (AppError → gRPC status mapping)
+
+type ErrorCode string
+
+const (
+	ErrorCodeNotFound         ErrorCode = "NOT_FOUND"
+	ErrorCodeInvalidParameter ErrorCode = "INVALID_PARAMETER"
+	ErrorCodeAuthZ            ErrorCode = "AUTHZ"
+	ErrorCodeAuthN            ErrorCode = "AUTHN"
+	ErrorCodeInternal         ErrorCode = "INTERNAL"
+)
+
+type AppError struct {
+	Code    ErrorCode
+	Message string
+	Details map[string]string
+}
+
+func NewNotFound(message string) *AppError {
+	return &AppError{
+		Code:    ErrorCodeNotFound,
+		Message: message,
+	}
+}
+func NewInvalidParameter(message string) *AppError {
+	return &AppError{
+		Code:    ErrorCodeInvalidParameter,
+		Message: message,
+	}
+}
+
+func NewAuthZ(message string) *AppError {
+	return &AppError{
+		Code:    ErrorCodeAuthZ,
+		Message: message,
+	}
+}
+
+func NewAuthN(message string) *AppError {
+	return &AppError{
+		Code:    ErrorCodeAuthN,
+		Message: message,
+	}
+}
+
+func NewInternal(message string) *AppError {
+	return &AppError{
+		Code:    ErrorCodeInternal,
+		Message: message,
+	}
+}
+
+func (e *AppError) Error() string {
+	return e.Message
+}
