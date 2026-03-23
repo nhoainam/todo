@@ -353,6 +353,7 @@ func (x *ListTodosRequest) GetOffset() int32 {
 type ListTodosResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Todos         []*Todo                `protobuf:"bytes,1,rep,name=todos,proto3" json:"todos,omitempty"`
+	TotalCount    int32                  `protobuf:"varint,2,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -392,6 +393,13 @@ func (x *ListTodosResponse) GetTodos() []*Todo {
 		return x.Todos
 	}
 	return nil
+}
+
+func (x *ListTodosResponse) GetTotalCount() int32 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
 }
 
 type CreateTodoRequest struct {
@@ -655,9 +663,11 @@ const file_todo_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\x0e2\x13.todo.v1.TodoStatusH\x00R\x06status\x88\x01\x01\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x04 \x01(\x05R\x06offsetB\t\n" +
-	"\a_status\"8\n" +
+	"\a_status\"Y\n" +
 	"\x11ListTodosResponse\x12#\n" +
-	"\x05todos\x18\x01 \x03(\v2\r.todo.v1.TodoR\x05todos\"N\n" +
+	"\x05todos\x18\x01 \x03(\v2\r.todo.v1.TodoR\x05todos\x12\x1f\n" +
+	"\vtotal_count\x18\x02 \x01(\x05R\n" +
+	"totalCount\"N\n" +
 	"\x11CreateTodoRequest\x12\x16\n" +
 	"\x06parent\x18\x01 \x01(\tR\x06parent\x12!\n" +
 	"\x04todo\x18\x02 \x01(\v2\r.todo.v1.TodoR\x04todo\"7\n" +
