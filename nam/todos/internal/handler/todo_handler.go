@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/go-playground/validator/v10"
-	apperrors "github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain"
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/apperrors"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/entity"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler/mapper"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase"
@@ -44,14 +44,16 @@ import (
 
 type server struct {
 	todov1.UnimplementedTodosServiceServer
-	todoGetter usecase.TodoGetter
-	validator  *validator.Validate
+	todoGetter  usecase.TodoGetter
+	todoUpdater usecase.TodoUpdater
+	validator   *validator.Validate
 }
 
-func NewServer(todoGetter usecase.TodoGetter, validator *validator.Validate) todov1.TodosServiceServer {
+func NewServer(todoGetter usecase.TodoGetter, todoUpdater usecase.TodoUpdater, validator *validator.Validate) todov1.TodosServiceServer {
 	return &server{
-		todoGetter: todoGetter,
-		validator:  validator,
+		todoGetter:  todoGetter,
+		todoUpdater: todoUpdater,
+		validator:   validator,
 	}
 }
 
@@ -80,7 +82,7 @@ func (s *server) GetTodo(ctx context.Context, req *todov1.GetTodoRequest) (*todo
 	// Step 1: Parse proto request -> domain types
 	name, err := entity.ParseTodoResourceName(req.Name)
 	if err != nil {
-		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid todo resource name"))
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid todo resource name", err))
 	}
 
 	// Step 2: Build usecase input DTO
@@ -90,7 +92,7 @@ func (s *server) GetTodo(ctx context.Context, req *todov1.GetTodoRequest) (*todo
 
 	// Step 3: Validate input
 	if err := s.validator.Struct(&in); err != nil {
-		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid request"))
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid request", err))
 	}
 
 	// Step 4: Call usecase
@@ -101,6 +103,64 @@ func (s *server) GetTodo(ctx context.Context, req *todov1.GetTodoRequest) (*todo
 
 	// Step 5: Map domain -> proto response
 	return &todov1.GetTodoResponse{
+		Todo: mapper.TodoToPb(out.Todo),
+	}, nil
+}
+
+func (s *server) UpdateTodo(ctx context.Context, req *todov1.UpdateTodoRequest) (*todov1.UpdateTodoResponse, error) {
+	if req.Todo == nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("todo is required", nil))
+	}
+
+	// Step 1: Parse resource name from the todo message
+	name, err := entity.ParseTodoResourceName(req.Todo.Name)
+	if err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid todo resource name", err))
+	}
+
+	// Step 2: Build input DTO — walk the FieldMask and set only the requested pointer fields
+	in := input.TodoUpdater{
+		Name: *name,
+	}
+
+	paths := req.GetUpdateMask().GetPaths()
+	// If the mask is empty, treat it as a full update (all settable fields)
+	if len(paths) == 0 {
+		paths = []string{"title", "content", "status", "due_date"}
+	}
+
+	for _, path := range paths {
+		switch path {
+		case "title":
+			v := req.Todo.Title
+			in.Title = &v
+		case "content":
+			v := req.Todo.Content
+			in.Content = &v
+		case "status":
+			s := mapper.PbToStatus(req.Todo.Status)
+			in.Status = &s
+		case "due_date":
+			if req.Todo.DueDate != nil {
+				t := req.Todo.DueDate.AsTime()
+				in.DueDate = &t
+			}
+		}
+	}
+
+	// Step 3: Validate
+	if err := s.validator.Struct(&in); err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid request", err))
+	}
+
+	// Step 4: Execute
+	out, err := s.todoUpdater.Update(ctx, &in)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+
+	// Step 5: Map response
+	return &todov1.UpdateTodoResponse{
 		Todo: mapper.TodoToPb(out.Todo),
 	}, nil
 }

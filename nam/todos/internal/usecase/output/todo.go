@@ -31,5 +31,6 @@ type TodoUpdater struct {
 }
 
 type TodoLister struct {
-	Todos []*entity.Todo
+	Todos      []*entity.Todo
+	TotalCount int32
 }

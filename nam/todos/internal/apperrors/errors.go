@@ -37,42 +37,91 @@ const (
 )
 
 type AppError struct {
-	Code    ErrorCode
-	Message string
-	Details map[string]string
+	Code     ErrorCode
+	Message  string
+	metadata map[string]any
+	cause    error
 }
 
-func NewNotFound(message string) *AppError {
+type MetadataOption func(map[string]any)
+
+func WithMetadata(key string, value any) MetadataOption {
+	return func(metadata map[string]any) {
+		metadata[key] = value
+	}
+}
+
+func NewNotFound(message string, cause error, metadata ...MetadataOption) *AppError {
 	return &AppError{
 		Code:    ErrorCodeNotFound,
 		Message: message,
+		cause:   cause,
+		metadata: func() map[string]any {
+			m := make(map[string]any)
+			for _, option := range metadata {
+				option(m)
+			}
+			return m
+		}(),
 	}
 }
-func NewInvalidParameter(message string) *AppError {
+func NewInvalidParameter(message string, cause error, metadata ...MetadataOption) *AppError {
 	return &AppError{
 		Code:    ErrorCodeInvalidParameter,
 		Message: message,
+		cause:   cause,
+		metadata: func() map[string]any {
+			m := make(map[string]any)
+			for _, option := range metadata {
+				option(m)
+			}
+			return m
+		}(),
 	}
 }
 
-func NewAuthZ(message string) *AppError {
+func NewAuthZ(message string, cause error, metadata ...MetadataOption) *AppError {
 	return &AppError{
 		Code:    ErrorCodeAuthZ,
 		Message: message,
+		cause:   cause,
+		metadata: func() map[string]any {
+			m := make(map[string]any)
+			for _, option := range metadata {
+				option(m)
+			}
+			return m
+		}(),
 	}
 }
 
-func NewAuthN(message string) *AppError {
+func NewAuthN(message string, cause error, metadata ...MetadataOption) *AppError {
 	return &AppError{
 		Code:    ErrorCodeAuthN,
 		Message: message,
+		cause:   cause,
+		metadata: func() map[string]any {
+			m := make(map[string]any)
+			for _, option := range metadata {
+				option(m)
+			}
+			return m
+		}(),
 	}
 }
 
-func NewInternal(message string) *AppError {
+func NewInternal(message string, cause error, metadata ...MetadataOption) *AppError {
 	return &AppError{
 		Code:    ErrorCodeInternal,
 		Message: message,
+		cause:   cause,
+		metadata: func() map[string]any {
+			m := make(map[string]any)
+			for _, option := range metadata {
+				option(m)
+			}
+			return m
+		}(),
 	}
 }
 

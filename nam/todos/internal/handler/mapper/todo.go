@@ -1,7 +1,6 @@
 package mapper
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/entity"
@@ -52,6 +51,20 @@ func statusToPb(status entity.TodoStatus) todov1.TodoStatus {
 	}
 }
 
+// PbToStatus converts a proto TodoStatus to its domain equivalent.
+func PbToStatus(s todov1.TodoStatus) entity.TodoStatus {
+	switch s {
+	case todov1.TodoStatus_PENDING:
+		return entity.TodoStatusPENDING
+	case todov1.TodoStatus_IN_PROGRESS:
+		return entity.TodoStatusIN_PROGRESS
+	case todov1.TodoStatus_DONE:
+		return entity.TodoStatusDONE
+	default:
+		return entity.TodoStatusPENDING
+	}
+}
+
 func ToProtoTime(t *time.Time) *timestamppb.Timestamp {
 	if t == nil {
 		return nil
@@ -64,7 +77,11 @@ func TodoToPb(t *entity.Todo) *todov1.Todo {
 		return nil
 	}
 	return &todov1.Todo{
-		Name:      fmt.Sprintf("users/%d/todo-lists/%d/todos/%d", t.CreatorID, t.ListID, t.ID),
+		Name: entity.TodoResourceName{
+			UserID:     t.CreatorID,
+			TodoListID: t.ListID,
+			TodoID:     t.ID,
+		}.String(),
 		Title:     t.Title,
 		Content:   t.Content,
 		Status:    statusToPb(t.Status),

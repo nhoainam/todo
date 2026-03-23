@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	apperrors "github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain"
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/apperrors"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/gateway"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase/input"
@@ -27,7 +27,7 @@ func (g *todoGetter) Get(ctx context.Context, in *input.TodoGetter) (*output.Tod
 		return nil, err
 	}
 	if todo == nil {
-		return nil, apperrors.NewNotFound("todo not found")
+		return nil, apperrors.NewNotFound("todo not found", err, nil)
 	}
 	return &output.TodoGetter{Todo: todo}, nil
 }

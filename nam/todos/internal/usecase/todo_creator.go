@@ -31,6 +31,6 @@ import (
 // See: resources/phase-01-architecture-grpc.md (use case pattern)
 // See: resources/phase-02-database-di.md (gateway Commands/Queries separation)
 
-type TodoCreater interface {
+type TodoCreator interface {
 	Create(ctx context.Context, input *input.TodoCreator) (*output.TodoCreator, error)
 }
