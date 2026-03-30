@@ -1,0 +1,7 @@
+adapter: mysql2      # loại database: mysql2, postgresql, sqlite3
+encoding: utf8       # encoding
+database: rGPC       # tên database
+username: root       # username
+password: nhn1832004   # password (nếu có)
+host: localhost      # host (mặc định localhost)
+port: 3306           # port (mặc định 3306)

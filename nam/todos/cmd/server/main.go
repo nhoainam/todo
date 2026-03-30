@@ -28,6 +28,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler"
 	grpcserver "github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler/grpc"
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler/grpc/interceptor"
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/idgen"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/persistence"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/service"
 )
@@ -44,16 +46,19 @@ func main() {
 	commandsGW := persistence.NewTodoCommandsGateway()
 
 	todoGetter := service.NewTodoGetter(queriesGW)
-	validate := validator.New()
 	todoUpdater := service.NewTodoUpdater(queriesGW, commandsGW)
-	todosHandler := handler.NewServer(todoGetter, todoUpdater, validate)
+	todoLister := service.NewTodoLister(queriesGW)
+	todoCreator := service.NewTodoCreator(commandsGW, idgen.NewIDGenerator())
+	todoDeleter := service.NewTodoDeleter(queriesGW, commandsGW)
+	validate := validator.New()
+	todosHandler := handler.NewServer(todoGetter, todoUpdater, todoLister, todoCreator, todoDeleter, validate)
 
 	// --- gRPC server ---
 	//
 	// grpcserver.NewServer wraps grpc.NewServer with the Phase-1 interceptor
 	// chain and registers all service implementations in one place.
 	// See internal/handler/grpc/grpc.go for the full chain.
-	grpcSrv, cleanup, err := grpcserver.NewServer(todosHandler)
+	grpcSrv, cleanup, err := grpcserver.NewServer(todosHandler, interceptor.NewDBInterceptor(nil))
 	if err != nil {
 		log.Fatalf("failed to create gRPC server: %v", err)
 	}

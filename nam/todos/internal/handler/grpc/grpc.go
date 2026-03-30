@@ -7,6 +7,7 @@ import (
 	// package, which is also named "grpc".
 	grpclib "google.golang.org/grpc"
 
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler/grpc/interceptor"
 	todov1 "github.com/tuannguyenandpadcojp/fresher26/nam/todos/proto/todo/v1"
 )
 
@@ -14,14 +15,16 @@ import (
 //
 // Parameters:
 //   - todosService: the TodosService handler (internal/handler/todo_handler.go)
+//   - dbInterceptor: injects *gorm.DB into every request context
 //
 // Returns:
 //   - *grpclib.Server  — ready to call Serve(lis)
 //   - func()           — cleanup; call on shutdown (flushes traces in later phases)
 //   - error            — non-nil only if server construction itself fails
-func NewServer(todosService todov1.TodosServiceServer) (*grpclib.Server, func(), error) {
+func NewServer(todosService todov1.TodosServiceServer, dbInterceptor *interceptor.DBInterceptor) (*grpclib.Server, func(), error) {
 	server := grpclib.NewServer(
 		grpclib.ChainUnaryInterceptor(
+			dbInterceptor.Unary(), // Inject DB into every request context
 		// grpctrace.UnaryServerInterceptor(...),     // 1. Datadog tracing
 		//     logging.UnaryServerInterceptor(...),        // 2. Logging
 		//     recovery.UnaryServerInterceptor(...),       // 3. Panic recovery

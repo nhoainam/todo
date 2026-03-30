@@ -18,3 +18,13 @@ generate:
 
 run:
 	go run ./cmd/server
+
+# Apply schema changes to the database
+migrate:
+	ridgepole -c "mysql2://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)" \
+		--apply -f database/todos.schema
+
+# Dry-run — preview SQL without executing
+migrate-dry-run:
+	ridgepole -c "mysql2://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)" \
+		--apply --dry-run -f database/todos.schema

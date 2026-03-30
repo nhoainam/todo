@@ -46,13 +46,26 @@ type server struct {
 	todov1.UnimplementedTodosServiceServer
 	todoGetter  usecase.TodoGetter
 	todoUpdater usecase.TodoUpdater
+	todoLister  usecase.TodoLister
+	todoCreator usecase.TodoCreator
+	todoDeleter usecase.TodoDeleter
 	validator   *validator.Validate
 }
 
-func NewServer(todoGetter usecase.TodoGetter, todoUpdater usecase.TodoUpdater, validator *validator.Validate) todov1.TodosServiceServer {
+func NewServer(
+	todoGetter usecase.TodoGetter,
+	todoUpdater usecase.TodoUpdater,
+	todoLister usecase.TodoLister,
+	todoCreator usecase.TodoCreator,
+	todoDeleter usecase.TodoDeleter,
+	validator *validator.Validate,
+) todov1.TodosServiceServer {
 	return &server{
 		todoGetter:  todoGetter,
 		todoUpdater: todoUpdater,
+		todoLister:  todoLister,
+		todoCreator: todoCreator,
+		todoDeleter: todoDeleter,
 		validator:   validator,
 	}
 }

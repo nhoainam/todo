@@ -43,6 +43,16 @@ const (
 	TodoStatusDONE        TodoStatus = "DONE"
 )
 
+type Priority int
+
+const (
+	PriorityLow    Priority = 0
+	PriorityMedium Priority = 1
+	PriorityHigh   Priority = 2
+)
+
+func (p Priority) Int() int { return int(p) }
+
 type Todo struct {
 	ID        TodoID
 	ListID    TodoListID
@@ -50,6 +60,7 @@ type Todo struct {
 	Title     string
 	Content   string
 	Status    TodoStatus
+	Priority  Priority
 	DueDate   *time.Time
 	CreatedAt time.Time
 	UpdatedAt time.Time

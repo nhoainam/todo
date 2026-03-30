@@ -104,9 +104,33 @@ func (m *mockTodoUpdater) Update(_ context.Context, in *input.TodoUpdater) (*out
 	return nil, nil
 }
 
+// mockTodoLister satisfies usecase.TodoLister with a no-op.
+type mockTodoLister struct{}
+
+func (m *mockTodoLister) List(_ context.Context, _ *input.TodoLister) (*output.TodoLister, error) {
+	return &output.TodoLister{}, nil
+}
+
+// mockTodoCreator satisfies usecase.TodoCreator with a no-op.
+type mockTodoCreator struct{}
+
+func (m *mockTodoCreator) Create(_ context.Context, _ *input.TodoCreator) (*output.TodoCreator, error) {
+	return nil, nil
+}
+
+// mockTodoDeleter satisfies usecase.TodoDeleter with a no-op.
+type mockTodoDeleter struct{}
+
+func (m *mockTodoDeleter) Delete(_ context.Context, _ *input.TodoDeleter) error {
+	return nil
+}
+
 // Compile-time interface checks — fails to compile if the mocks drift from the real interfaces.
 var _ usecase.TodoGetter = (*mockTodoGetter)(nil)
 var _ usecase.TodoUpdater = (*mockTodoUpdater)(nil)
+var _ usecase.TodoLister = (*mockTodoLister)(nil)
+var _ usecase.TodoCreator = (*mockTodoCreator)(nil)
+var _ usecase.TodoDeleter = (*mockTodoDeleter)(nil)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test helpers
@@ -114,7 +138,7 @@ var _ usecase.TodoUpdater = (*mockTodoUpdater)(nil)
 
 // newTestServer constructs a handler.server ready for unit testing.
 func newTestServer(getter usecase.TodoGetter) todov1.TodosServiceServer {
-	return handler.NewServer(getter, &mockTodoUpdater{}, validator.New())
+	return handler.NewServer(getter, &mockTodoUpdater{}, &mockTodoLister{}, &mockTodoCreator{}, &mockTodoDeleter{}, validator.New())
 }
 
 // mustStatusCode asserts the gRPC status code of an error and returns it.

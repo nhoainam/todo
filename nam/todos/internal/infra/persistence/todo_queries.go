@@ -19,3 +19,7 @@ func NewTodoQueriesGateway() *TodoQueriesGateway {
 func (g *TodoQueriesGateway) Get(context.Context, entity.TodoID, *gateway.GetTodoOptions) (*entity.Todo, error) {
 	return nil, nil
 }
+
+func (g *TodoQueriesGateway) List(context.Context, *gateway.ListTodosOptions) (*gateway.OffsetPageResult[*entity.Todo], error) {
+	return nil, nil
+}
