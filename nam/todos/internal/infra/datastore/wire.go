@@ -6,4 +6,5 @@ import "github.com/google/wire"
 var WireSet = wire.NewSet(
 	NewTodoReader,
 	NewTodoWriter,
+	NewBinder,
 )

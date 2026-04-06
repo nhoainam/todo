@@ -16,25 +16,25 @@ import (
 
 	"gorm.io/plugin/dbresolver"
 
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/persistence/model"
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/entity"
 )
 
 func newTodo(db *gorm.DB, opts ...gen.DOOption) todo {
 	_todo := todo{}
 
 	_todo.todoDo.UseDB(db, opts...)
-	_todo.todoDo.UseModel(&model.Todo{})
+	_todo.todoDo.UseModel(&entity.Todo{})
 
 	tableName := _todo.todoDo.TableName()
 	_todo.ALL = field.NewAsterisk(tableName)
 	_todo.ID = field.NewInt64(tableName, "id")
-	_todo.ListID = field.NewInt64(tableName, "todo_list_id")
+	_todo.ListID = field.NewInt64(tableName, "list_id")
+	_todo.CreatorID = field.NewInt64(tableName, "creator_id")
 	_todo.Title = field.NewString(tableName, "title")
 	_todo.Content = field.NewString(tableName, "content")
-	_todo.Status = field.NewInt(tableName, "status")
+	_todo.Status = field.NewString(tableName, "status")
 	_todo.Priority = field.NewInt(tableName, "priority")
 	_todo.DueDate = field.NewTime(tableName, "due_date")
-	_todo.CreatorID = field.NewInt64(tableName, "creator_id")
 	_todo.CreatedAt = field.NewTime(tableName, "created_at")
 	_todo.UpdatedAt = field.NewTime(tableName, "updated_at")
 
@@ -49,12 +49,12 @@ type todo struct {
 	ALL       field.Asterisk
 	ID        field.Int64
 	ListID    field.Int64
+	CreatorID field.Int64
 	Title     field.String
 	Content   field.String
-	Status    field.Int
+	Status    field.String
 	Priority  field.Int
 	DueDate   field.Time
-	CreatorID field.Int64
 	CreatedAt field.Time
 	UpdatedAt field.Time
 
@@ -74,13 +74,13 @@ func (t todo) As(alias string) *todo {
 func (t *todo) updateTableName(table string) *todo {
 	t.ALL = field.NewAsterisk(table)
 	t.ID = field.NewInt64(table, "id")
-	t.ListID = field.NewInt64(table, "todo_list_id")
+	t.ListID = field.NewInt64(table, "list_id")
+	t.CreatorID = field.NewInt64(table, "creator_id")
 	t.Title = field.NewString(table, "title")
 	t.Content = field.NewString(table, "content")
-	t.Status = field.NewInt(table, "status")
+	t.Status = field.NewString(table, "status")
 	t.Priority = field.NewInt(table, "priority")
 	t.DueDate = field.NewTime(table, "due_date")
-	t.CreatorID = field.NewInt64(table, "creator_id")
 	t.CreatedAt = field.NewTime(table, "created_at")
 	t.UpdatedAt = field.NewTime(table, "updated_at")
 
@@ -109,13 +109,13 @@ func (t *todo) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 func (t *todo) fillFieldMap() {
 	t.fieldMap = make(map[string]field.Expr, 10)
 	t.fieldMap["id"] = t.ID
-	t.fieldMap["todo_list_id"] = t.ListID
+	t.fieldMap["list_id"] = t.ListID
+	t.fieldMap["creator_id"] = t.CreatorID
 	t.fieldMap["title"] = t.Title
 	t.fieldMap["content"] = t.Content
 	t.fieldMap["status"] = t.Status
 	t.fieldMap["priority"] = t.Priority
 	t.fieldMap["due_date"] = t.DueDate
-	t.fieldMap["creator_id"] = t.CreatorID
 	t.fieldMap["created_at"] = t.CreatedAt
 	t.fieldMap["updated_at"] = t.UpdatedAt
 }
@@ -161,17 +161,17 @@ type ITodoDo interface {
 	Count() (count int64, err error)
 	Scopes(funcs ...func(gen.Dao) gen.Dao) ITodoDo
 	Unscoped() ITodoDo
-	Create(values ...*model.Todo) error
-	CreateInBatches(values []*model.Todo, batchSize int) error
-	Save(values ...*model.Todo) error
-	First() (*model.Todo, error)
-	Take() (*model.Todo, error)
-	Last() (*model.Todo, error)
-	Find() ([]*model.Todo, error)
-	FindInBatch(batchSize int, fc func(tx gen.Dao, batch int) error) (results []*model.Todo, err error)
-	FindInBatches(result *[]*model.Todo, batchSize int, fc func(tx gen.Dao, batch int) error) error
+	Create(values ...*entity.Todo) error
+	CreateInBatches(values []*entity.Todo, batchSize int) error
+	Save(values ...*entity.Todo) error
+	First() (*entity.Todo, error)
+	Take() (*entity.Todo, error)
+	Last() (*entity.Todo, error)
+	Find() ([]*entity.Todo, error)
+	FindInBatch(batchSize int, fc func(tx gen.Dao, batch int) error) (results []*entity.Todo, err error)
+	FindInBatches(result *[]*entity.Todo, batchSize int, fc func(tx gen.Dao, batch int) error) error
 	Pluck(column field.Expr, dest interface{}) error
-	Delete(...*model.Todo) (info gen.ResultInfo, err error)
+	Delete(...*entity.Todo) (info gen.ResultInfo, err error)
 	Update(column field.Expr, value interface{}) (info gen.ResultInfo, err error)
 	UpdateSimple(columns ...field.AssignExpr) (info gen.ResultInfo, err error)
 	Updates(value interface{}) (info gen.ResultInfo, err error)
@@ -183,9 +183,9 @@ type ITodoDo interface {
 	Assign(attrs ...field.AssignExpr) ITodoDo
 	Joins(fields ...field.RelationField) ITodoDo
 	Preload(fields ...field.RelationField) ITodoDo
-	FirstOrInit() (*model.Todo, error)
-	FirstOrCreate() (*model.Todo, error)
-	FindByPage(offset int, limit int) (result []*model.Todo, count int64, err error)
+	FirstOrInit() (*entity.Todo, error)
+	FirstOrCreate() (*entity.Todo, error)
+	FindByPage(offset int, limit int) (result []*entity.Todo, count int64, err error)
 	ScanByPage(result interface{}, offset int, limit int) (count int64, err error)
 	Scan(result interface{}) (err error)
 	Returning(value interface{}, columns ...string) ITodoDo
@@ -285,57 +285,57 @@ func (t todoDo) Unscoped() ITodoDo {
 	return t.withDO(t.DO.Unscoped())
 }
 
-func (t todoDo) Create(values ...*model.Todo) error {
+func (t todoDo) Create(values ...*entity.Todo) error {
 	if len(values) == 0 {
 		return nil
 	}
 	return t.DO.Create(values)
 }
 
-func (t todoDo) CreateInBatches(values []*model.Todo, batchSize int) error {
+func (t todoDo) CreateInBatches(values []*entity.Todo, batchSize int) error {
 	return t.DO.CreateInBatches(values, batchSize)
 }
 
 // Save : !!! underlying implementation is different with GORM
 // The method is equivalent to executing the statement: db.Clauses(clause.OnConflict{UpdateAll: true}).Create(values)
-func (t todoDo) Save(values ...*model.Todo) error {
+func (t todoDo) Save(values ...*entity.Todo) error {
 	if len(values) == 0 {
 		return nil
 	}
 	return t.DO.Save(values)
 }
 
-func (t todoDo) First() (*model.Todo, error) {
+func (t todoDo) First() (*entity.Todo, error) {
 	if result, err := t.DO.First(); err != nil {
 		return nil, err
 	} else {
-		return result.(*model.Todo), nil
+		return result.(*entity.Todo), nil
 	}
 }
 
-func (t todoDo) Take() (*model.Todo, error) {
+func (t todoDo) Take() (*entity.Todo, error) {
 	if result, err := t.DO.Take(); err != nil {
 		return nil, err
 	} else {
-		return result.(*model.Todo), nil
+		return result.(*entity.Todo), nil
 	}
 }
 
-func (t todoDo) Last() (*model.Todo, error) {
+func (t todoDo) Last() (*entity.Todo, error) {
 	if result, err := t.DO.Last(); err != nil {
 		return nil, err
 	} else {
-		return result.(*model.Todo), nil
+		return result.(*entity.Todo), nil
 	}
 }
 
-func (t todoDo) Find() ([]*model.Todo, error) {
+func (t todoDo) Find() ([]*entity.Todo, error) {
 	result, err := t.DO.Find()
-	return result.([]*model.Todo), err
+	return result.([]*entity.Todo), err
 }
 
-func (t todoDo) FindInBatch(batchSize int, fc func(tx gen.Dao, batch int) error) (results []*model.Todo, err error) {
-	buf := make([]*model.Todo, 0, batchSize)
+func (t todoDo) FindInBatch(batchSize int, fc func(tx gen.Dao, batch int) error) (results []*entity.Todo, err error) {
+	buf := make([]*entity.Todo, 0, batchSize)
 	err = t.DO.FindInBatches(&buf, batchSize, func(tx gen.Dao, batch int) error {
 		defer func() { results = append(results, buf...) }()
 		return fc(tx, batch)
@@ -343,7 +343,7 @@ func (t todoDo) FindInBatch(batchSize int, fc func(tx gen.Dao, batch int) error)
 	return results, err
 }
 
-func (t todoDo) FindInBatches(result *[]*model.Todo, batchSize int, fc func(tx gen.Dao, batch int) error) error {
+func (t todoDo) FindInBatches(result *[]*entity.Todo, batchSize int, fc func(tx gen.Dao, batch int) error) error {
 	return t.DO.FindInBatches(result, batchSize, fc)
 }
 
@@ -369,23 +369,23 @@ func (t todoDo) Preload(fields ...field.RelationField) ITodoDo {
 	return &t
 }
 
-func (t todoDo) FirstOrInit() (*model.Todo, error) {
+func (t todoDo) FirstOrInit() (*entity.Todo, error) {
 	if result, err := t.DO.FirstOrInit(); err != nil {
 		return nil, err
 	} else {
-		return result.(*model.Todo), nil
+		return result.(*entity.Todo), nil
 	}
 }
 
-func (t todoDo) FirstOrCreate() (*model.Todo, error) {
+func (t todoDo) FirstOrCreate() (*entity.Todo, error) {
 	if result, err := t.DO.FirstOrCreate(); err != nil {
 		return nil, err
 	} else {
-		return result.(*model.Todo), nil
+		return result.(*entity.Todo), nil
 	}
 }
 
-func (t todoDo) FindByPage(offset int, limit int) (result []*model.Todo, count int64, err error) {
+func (t todoDo) FindByPage(offset int, limit int) (result []*entity.Todo, count int64, err error) {
 	result, err = t.Offset(offset).Limit(limit).Find()
 	if err != nil {
 		return
@@ -414,7 +414,7 @@ func (t todoDo) Scan(result interface{}) (err error) {
 	return t.DO.Scan(result)
 }
 
-func (t todoDo) Delete(models ...*model.Todo) (result gen.ResultInfo, err error) {
+func (t todoDo) Delete(models ...*entity.Todo) (result gen.ResultInfo, err error) {
 	return t.DO.Delete(models)
 }
 

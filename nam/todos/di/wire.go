@@ -11,7 +11,6 @@ import (
 	grpcserver "github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler/grpc"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/datastore"
 	gorm_app "github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/gorm"
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/idgen"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/service"
 )
 
@@ -24,7 +23,6 @@ func InitializeServer(cfg *config.Config) (*grpclib.Server, func(), error) {
 		// Infrastructure
 		gorm_app.WireSet,  // Open(*gorm.DB)
 		datastore.WireSet, // NewTodoReader, NewTodoWriter, NewBinder
-		idgen.WireSet,     // NewIDGenerator (EX4: new provider)
 
 		// Services (use-case implementations)
 		service.WireSet, // NewTodoGetter, NewTodoUpdater, NewTodoLister, NewTodoCreator, NewTodoDeleter

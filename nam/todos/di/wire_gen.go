@@ -13,7 +13,6 @@ import (
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler/grpc/interceptor"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/datastore"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/gorm"
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/idgen"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/service"
 	"google.golang.org/grpc"
 )
@@ -28,15 +27,15 @@ func InitializeServer(cfg *config.Config) (*grpc.Server, func(), error) {
 	todoCommandsGateway := datastore.NewTodoWriter()
 	todoUpdater := service.NewTodoUpdater(todoQueriesGateway, todoCommandsGateway)
 	todoLister := service.NewTodoLister(todoQueriesGateway)
-	idGenerator := idgen.NewIDGenerator()
-	todoCreator := service.NewTodoCreator(todoCommandsGateway, idGenerator)
-	todoDeleter := service.NewTodoDeleter(todoQueriesGateway, todoCommandsGateway)
-	validate := handler.NewValidator()
-	todosServiceServer := handler.NewServer(todoGetter, todoUpdater, todoLister, todoCreator, todoDeleter, validate)
 	db, cleanup, err := gorm_app.Open(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
+	binder := datastore.NewBinder(db)
+	todoCreator := service.NewTodoCreator(todoCommandsGateway, binder)
+	todoDeleter := service.NewTodoDeleter(todoQueriesGateway, todoCommandsGateway)
+	validate := handler.NewValidator()
+	todosServiceServer := handler.NewServer(todoGetter, todoUpdater, todoLister, todoCreator, todoDeleter, validate)
 	dbInterceptor := interceptor.NewDBInterceptor(db)
 	server, cleanup2, err := grpc2.NewServer(todosServiceServer, dbInterceptor)
 	if err != nil {

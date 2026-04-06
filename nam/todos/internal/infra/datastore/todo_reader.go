@@ -10,7 +10,6 @@ import (
 
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/entity"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/gateway"
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/persistence/mapper"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/query"
 	"gorm.io/gorm"
 )
@@ -44,7 +43,7 @@ func (r *todoReader) Get(
 		return nil, fmt.Errorf("get todo: %w", err)
 	}
 
-	return mapper.ToDomainTodo(todo), nil
+	return todo, nil
 }
 
 // List returns a paginated list of todos, filtered by the options provided.
@@ -79,7 +78,7 @@ func (r *todoReader) List(
 
 	todos := make([]*entity.Todo, 0, len(models))
 	for _, m := range models {
-		todos = append(todos, mapper.ToDomainTodo(m))
+		todos = append(todos, m)
 	}
 
 	return &gateway.OffsetPageResult[*entity.Todo]{
@@ -98,10 +97,10 @@ func (r *todoReader) applyFilter(q *query.Query, builder query.ITodoDo, filter *
 	todoQuery := q.Todo
 
 	if filter.StatusEq != nil {
-		statusMap := map[entity.TodoStatus]int{
-			entity.TodoStatusPENDING:     0,
-			entity.TodoStatusIN_PROGRESS: 1,
-			entity.TodoStatusDONE:        2,
+		statusMap := map[entity.TodoStatus]string{
+			entity.TodoStatusPENDING:     "PENDING",
+			entity.TodoStatusIN_PROGRESS: "IN_PROGRESS",
+			entity.TodoStatusDONE:        "DONE",
 		}
 		builder = builder.Where(todoQuery.Status.Eq(statusMap[*filter.StatusEq]))
 	}

@@ -5,7 +5,6 @@ import (
 
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/entity"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/gateway"
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/idgen"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase/input"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase/output"
@@ -13,20 +12,25 @@ import (
 
 type todoCreator struct {
 	todoCommandsGateway gateway.TodoCommandsGateway
-	idGen               idgen.IDGenerator
+	binder              gateway.Binder
 }
 
 // NewTodoCreator creates a new TodoCreator service.
-func NewTodoCreator(c gateway.TodoCommandsGateway, idGen idgen.IDGenerator) usecase.TodoCreator {
+func NewTodoCreator(c gateway.TodoCommandsGateway, b gateway.Binder) usecase.TodoCreator {
 	return &todoCreator{
 		todoCommandsGateway: c,
-		idGen:               idGen,
+		binder:              b,
 	}
 }
 
 func (s *todoCreator) Create(ctx context.Context, in *input.TodoCreator) (*output.TodoCreator, error) {
+	// 1. Start transaction
+	ctx = s.binder.Bind(ctx)
+
+	// 2. Always rollback on panic or early exit if not committed
+	defer s.binder.Rollback(ctx)
+
 	todo := &entity.Todo{
-		ID:        s.idGen.NewTodoID(),
 		ListID:    in.ListID,
 		CreatorID: in.CreatorID,
 		Title:     in.Title,
@@ -40,5 +44,8 @@ func (s *todoCreator) Create(ctx context.Context, in *input.TodoCreator) (*outpu
 		return nil, err
 	}
 
+	// 3. Commit if everything was successful
+	s.binder.Commit(ctx)
+	
 	return &output.TodoCreator{Todo: created}, nil
 }

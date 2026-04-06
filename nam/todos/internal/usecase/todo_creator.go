@@ -15,7 +15,6 @@ import (
 // 1. Define the TodoCreator interface
 // 2. Define todoCreatorImpl struct with dependencies:
 //    - TodoCommandsGateway (for writing to DB)
-//    - IDGenerator (for creating new TodoID)
 //    - Clock (for timestamps)
 // 3. Implement Execute method:
 //    - Receive input DTO (input.TodoCreator)

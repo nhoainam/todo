@@ -25,13 +25,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler"
-	grpcserver "github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler/grpc"
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler/grpc/interceptor"
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/idgen"
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/persistence"
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/service"
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/di"
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/config"
 )
 
 func main() {
@@ -42,23 +37,12 @@ func main() {
 		log.Fatalf("failed to listen on port %s: %v", port, err)
 	}
 
-	queriesGW := persistence.NewTodoQueriesGateway()
-	commandsGW := persistence.NewTodoCommandsGateway()
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
 
-	todoGetter := service.NewTodoGetter(queriesGW)
-	todoUpdater := service.NewTodoUpdater(queriesGW, commandsGW)
-	todoLister := service.NewTodoLister(queriesGW)
-	todoCreator := service.NewTodoCreator(commandsGW, idgen.NewIDGenerator())
-	todoDeleter := service.NewTodoDeleter(queriesGW, commandsGW)
-	validate := validator.New()
-	todosHandler := handler.NewServer(todoGetter, todoUpdater, todoLister, todoCreator, todoDeleter, validate)
-
-	// --- gRPC server ---
-	//
-	// grpcserver.NewServer wraps grpc.NewServer with the Phase-1 interceptor
-	// chain and registers all service implementations in one place.
-	// See internal/handler/grpc/grpc.go for the full chain.
-	grpcSrv, cleanup, err := grpcserver.NewServer(todosHandler, interceptor.NewDBInterceptor(nil))
+	grpcSrv, cleanup, err := di.InitializeServer(cfg)
 	if err != nil {
 		log.Fatalf("failed to create gRPC server: %v", err)
 	}

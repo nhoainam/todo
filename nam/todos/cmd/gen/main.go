@@ -3,7 +3,7 @@ package main
 import (
 	"gorm.io/gen"
 
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/infra/persistence/model"
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/entity"
 )
 
 func main() {
@@ -13,7 +13,7 @@ func main() {
 	})
 
 	g.ApplyBasic(
-		model.Todo{},
+		entity.Todo{},
 	)
 
 	g.Execute()
