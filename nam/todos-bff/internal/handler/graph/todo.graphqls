@@ -1,0 +1,133 @@
+# schema.graphqls — GraphQL Schema Definition
+#
+# Phase 3: GraphQL & BFF Pattern
+#
+# This file defines the GraphQL API contract:
+# 1. Define the Query type with root queries:
+#    - todo(name: ResourceName!): Todo
+#    - todos(listName: ResourceName!, first: Int, after: String): TodoConnection
+#
+# 2. Define the Mutation type:
+#    - createTodo(input: CreateTodoInput!): Todo!
+#    - updateTodo(input: UpdateTodoInput!): Todo!
+#    - deleteTodo(name: ResourceName!): Payload! @hasPermission(permissions: [TODO_DELETE])
+#
+# 3. Define object types:
+#    - Todo (name, title, content, status, creator, todoList, createdAt, updatedAt)
+#    - TodoConnection (edges, pageInfo) — for pagination
+#    - Payload (success)
+#
+# 4. Define custom scalars:
+#    - ResourceName — "users/{id}/todo-lists/{id}/todos/{id}"
+#    - Time — RFC3339 timestamp
+#
+# 5. Define directives:
+#    - @hasPermission(permissions: [Permission!]!) on FIELD_DEFINITION
+#
+# After editing this file, run: make generate
+# This generates resolvers and models that you implement.
+#
+# See: resources/phase-03-graphql-bff.md (GraphQL schema, directives, scalars)
+
+# Custom scalars
+scalar Time
+scalar ResourceName
+
+# Directives
+directive @hasPermission(permissions: [Permission!]!) on FIELD_DEFINITION
+directive @validateInput on FIELD_DEFINITION
+
+# Types
+type Todo {
+  name: ResourceName!
+  title: String!
+  content: String!
+  status: TodoStatus!
+  dueDate: Time
+  createdAt: Time!
+
+  # Field resolvers (loaded on demand)
+  creator: User
+  todoList: TodoList
+}
+
+# Queries
+type Query {
+  todos(listName: ResourceName!, input: TodosInput): TodoConnection!
+  todo(name: ResourceName!): Todo!
+}
+
+# Mutations
+type Mutation {
+  createTodo(input: CreateTodoInput!): CreateTodoPayload!
+  deleteTodo(name: ResourceName!): DeleteTodoPayload! @hasPermission(permissions: [TODO_DELETE]) @validateInput
+  updateTodoStatus(name: ResourceName!, status: TodoStatus!): UpdateTodoStatusPayload!
+}
+enum Permission {
+  TODO_DELETE
+}
+
+enum TodoStatus {
+  TODO_STATUS_UNSPECIFIED
+  TODO_STATUS_TODO
+  TODO_STATUS_IN_PROGRESS
+  TODO_STATUS_DONE
+}
+
+type User {
+  name: ResourceName!
+  displayName: String!
+}
+
+type TodoList {
+  name: ResourceName!
+  title: String!
+}
+
+type TodoTag {
+  name: ResourceName!
+  displayName: String!
+}
+
+input TodosInput {
+  limit: Int
+  offset: Int
+}
+
+type TodoEdge {
+  node: Todo!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  endCursor: String
+}
+
+type TodoConnection {
+  edges: [TodoEdge!]!
+  pageInfo: PageInfo!
+}
+
+
+
+input CreateTodoInput {
+  listName: ResourceName!
+  title: String!
+  content: String
+  status: TodoStatus
+  dueDate: Time
+}
+
+type CreateTodoPayload {
+  todo: Todo!
+}
+
+type DeleteTodoPayload {
+  success: Boolean!
+}
+
+type UpdateTodoStatusPayload {
+  todo: Todo!
+}
+

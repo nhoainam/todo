@@ -12,6 +12,5 @@ lint:
 generate:
 	go tool gqlgen generate .
 	go generate ./...
-
 run:
 	go run ./cmd/server

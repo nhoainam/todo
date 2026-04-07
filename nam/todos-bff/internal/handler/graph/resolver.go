@@ -1,5 +1,9 @@
 package graph
 
+import (
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/usecase"
+)
+
 // resolver.go — Root Resolver
 //
 // Phase 3: GraphQL & BFF Pattern
@@ -20,3 +24,11 @@ package graph
 // Wire injects all dependencies into it.
 //
 // See: resources/phase-03-graphql-bff.md (resolver pattern)
+
+type Resolver struct {
+	TodoGetter usecase.TodoGetter
+	// TodoCreator usecase.TodoCreator
+	// TodoUpdater usecase.TodoUpdater
+	// TodoDeleter usecase.TodoDeleter
+	// TodoLister  usecase.TodoLister
+}

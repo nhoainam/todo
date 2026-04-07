@@ -1,0 +1,34 @@
+schema:
+  - internal/handler/graph/*.graphqls
+
+exec:
+  filename: internal/handler/graph/generated/generated.go
+  package: generated
+
+model:
+  filename: internal/handler/graph/model/models_gen.go
+  package: model
+
+resolver:
+  layout: follow-schema
+  dir: internal/handler/graph
+  package: graph
+
+# Custom type mappings
+models:
+  Time:
+    model: github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/handler/graph/scalar.Time
+  ResourceName:
+    model: github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/handler/graph/scalar.ResourceName
+
+  # Field-level resolvers
+  Todo:
+    fields:
+      creator:
+        resolver: true    # Generate resolver function for this field
+      assignee:
+        resolver: true
+      todoList:
+        resolver: true
+      tags:
+        resolver: true
