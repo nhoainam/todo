@@ -51,7 +51,7 @@ type TodoDeleter struct {
 }
 
 type TodoLister struct {
-	Name   entity.TodoResourceName
+	Name   entity.TodoListResourceName
 	Status *entity.TodoStatus
 	Limit  int32
 	Offset int32

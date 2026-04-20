@@ -16,3 +16,6 @@ create_table "todos", id: :bigint, force: :cascade do |t|
   t.bigint  "creator_id", null: false
   t.timestamps
 end
+
+add_index "todos", ["todo_list_id"], name: "index_todos_on_todo_list_id"
+add_foreign_key "todos", "todo_lists", column: "todo_list_id"

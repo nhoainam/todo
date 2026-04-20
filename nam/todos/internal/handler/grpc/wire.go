@@ -6,4 +6,4 @@ import (
 )
 
 // WireSet provides the gRPC server constructor and its interceptors.
-var WireSet = wire.NewSet(NewServer, interceptor.NewDBInterceptor)
+var WireSet = wire.NewSet(NewServer, interceptor.NewAuthInterceptor, interceptor.NewDBInterceptor)

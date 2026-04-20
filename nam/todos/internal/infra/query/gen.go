@@ -16,34 +16,39 @@ import (
 )
 
 var (
-	Q    = new(Query)
-	Todo *todo
+	Q        = new(Query)
+	Todo     *todo
+	TodoList *todoList
 )
 
 func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	*Q = *Use(db, opts...)
 	Todo = &Q.Todo
+	TodoList = &Q.TodoList
 }
 
 func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 	return &Query{
-		db:   db,
-		Todo: newTodo(db, opts...),
+		db:       db,
+		Todo:     newTodo(db, opts...),
+		TodoList: newTodoList(db, opts...),
 	}
 }
 
 type Query struct {
 	db *gorm.DB
 
-	Todo todo
+	Todo     todo
+	TodoList todoList
 }
 
 func (q *Query) Available() bool { return q.db != nil }
 
 func (q *Query) clone(db *gorm.DB) *Query {
 	return &Query{
-		db:   db,
-		Todo: q.Todo.clone(db),
+		db:       db,
+		Todo:     q.Todo.clone(db),
+		TodoList: q.TodoList.clone(db),
 	}
 }
 
@@ -57,18 +62,21 @@ func (q *Query) WriteDB() *Query {
 
 func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 	return &Query{
-		db:   db,
-		Todo: q.Todo.replaceDB(db),
+		db:       db,
+		Todo:     q.Todo.replaceDB(db),
+		TodoList: q.TodoList.replaceDB(db),
 	}
 }
 
 type queryCtx struct {
-	Todo ITodoDo
+	Todo     ITodoDo
+	TodoList ITodoListDo
 }
 
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
-		Todo: q.Todo.WithContext(ctx),
+		Todo:     q.Todo.WithContext(ctx),
+		TodoList: q.TodoList.WithContext(ctx),
 	}
 }
 

@@ -2,6 +2,8 @@ package dataloader
 
 import (
 	"context"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/graph-gophers/dataloader/v7"
@@ -19,8 +21,19 @@ type userBatchLoader struct{}
 func (b *userBatchLoader) batchGetUsers(ctx context.Context, keys []string) []*dataloader.Result[*model.User] {
 	results := make([]*dataloader.Result[*model.User], len(keys))
 	for i, key := range keys {
+		userID := 0
+		parts := strings.Split(key, "/")
+		if len(parts) == 2 && parts[0] == "users" {
+			if parsedID, err := strconv.Atoi(parts[1]); err == nil {
+				userID = parsedID
+			}
+		}
+
 		results[i] = &dataloader.Result[*model.User]{
-			Data: &model.User{Name: scalar.ResourceName(key)},
+			Data: &model.User{
+				Username: key,
+				ID:       userID,
+			},
 			Error: nil,
 		}
 	}
@@ -33,7 +46,10 @@ func (b *todoListBatchLoader) batchGetTodoLists(ctx context.Context, keys []stri
 	results := make([]*dataloader.Result[*model.TodoList], len(keys))
 	for i, key := range keys {
 		results[i] = &dataloader.Result[*model.TodoList]{
-			Data: &model.TodoList{Name: scalar.ResourceName(key)},
+			Data: &model.TodoList{
+				Name:  scalar.ResourceName(key),
+				Title: key,
+			},
 			Error: nil,
 		}
 	}

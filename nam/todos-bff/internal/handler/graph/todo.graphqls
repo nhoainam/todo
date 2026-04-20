@@ -62,6 +62,7 @@ type Mutation {
   createTodo(input: CreateTodoInput!): CreateTodoPayload!
   deleteTodo(name: ResourceName!): DeleteTodoPayload! @hasPermission(permissions: [TODO_DELETE]) @validateInput
   updateTodoStatus(name: ResourceName!, status: TodoStatus!): UpdateTodoStatusPayload!
+  updateTodo(name: ResourceName!, input: UpdateTodoInput): UpdateTodoPayload!
 }
 enum Permission {
   TODO_DELETE
@@ -75,8 +76,8 @@ enum TodoStatus {
 }
 
 type User {
-  name: ResourceName!
-  displayName: String!
+  Username: String!
+  ID: Int!
 }
 
 type TodoList {
@@ -96,17 +97,17 @@ input TodosInput {
 
 type TodoEdge {
   node: Todo!
-  cursor: String!
 }
 
 type PageInfo {
   hasNextPage: Boolean!
-  endCursor: String
 }
 
 type TodoConnection {
+  listName: String!
   edges: [TodoEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 
@@ -131,3 +132,13 @@ type UpdateTodoStatusPayload {
   todo: Todo!
 }
 
+input UpdateTodoInput {
+  title: String
+  content: String
+  status: TodoStatus
+  dueDate: Time
+}
+
+type UpdateTodoPayload {
+  todo: Todo!
+}

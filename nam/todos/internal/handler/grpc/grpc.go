@@ -21,10 +21,15 @@ import (
 //   - *grpclib.Server  — ready to call Serve(lis)
 //   - func()           — cleanup; call on shutdown (flushes traces in later phases)
 //   - error            — non-nil only if server construction itself fails
-func NewServer(todosService todov1.TodosServiceServer, dbInterceptor *interceptor.DBInterceptor) (*grpclib.Server, func(), error) {
+func NewServer(
+	todosService todov1.TodosServiceServer,
+	authInterceptor *interceptor.AuthInterceptor,
+	dbInterceptor *interceptor.DBInterceptor,
+) (*grpclib.Server, func(), error) {
 	server := grpclib.NewServer(
 		grpclib.ChainUnaryInterceptor(
-			dbInterceptor.Unary(), // Inject DB into every request context
+			authInterceptor.Unary(), // Extract authenticated user id from metadata into context
+			dbInterceptor.Unary(),   // Inject DB into every request context
 		// grpctrace.UnaryServerInterceptor(...),     // 1. Datadog tracing
 		//     logging.UnaryServerInterceptor(...),        // 2. Logging
 		//     recovery.UnaryServerInterceptor(...),       // 3. Panic recovery

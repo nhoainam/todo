@@ -1,5 +1,13 @@
 .PHONY: build test lint generate run
 
+# Lấy đường dẫn GOPATH từ môi trường Go hiện tại
+GOPATH := $(shell go env GOPATH)
+
+# Thêm thư mục bin của Go vào biến PATH dùng chung cho toàn bộ Makefile
+export PATH := $(PATH):$(GOPATH)/bin
+include .env
+export
+
 build:
 	go build -o bin/server ./cmd/server
 

@@ -71,6 +71,7 @@ message ListTodosRequest {
 message ListTodosResponse {
     repeated Todo todos = 1;
     int32 total_count = 2;
+    string list_name = 3;
 }
 
 message CreateTodoRequest {
