@@ -20,3 +20,8 @@ package entity
 type UserID int64
 
 func (id UserID) Int64() int64 { return int64(id) }
+
+type User struct {
+	ID       UserID
+	Username string
+}

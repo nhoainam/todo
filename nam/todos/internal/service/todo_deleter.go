@@ -23,7 +23,12 @@ func NewTodoDeleter(q gateway.TodoQueriesGateway, c gateway.TodoCommandsGateway)
 }
 
 func (s *todoDeleter) Delete(ctx context.Context, in *input.TodoDeleter) error {
-	existing, err := s.todoQueriesGateway.Get(ctx, in.Name.TodoID, nil)
+	listID := in.Name.TodoListID
+	userID := in.Name.UserID
+	existing, err := s.todoQueriesGateway.Get(ctx, in.Name.TodoID, &gateway.GetTodoOptions{
+		ListIDEq:    &listID,
+		CreatorIDEq: &userID,
+	})
 	if err != nil {
 		return err
 	}

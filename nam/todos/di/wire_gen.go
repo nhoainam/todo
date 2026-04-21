@@ -36,8 +36,9 @@ func InitializeServer(cfg *config.Config) (*grpc.Server, func(), error) {
 	todoDeleter := service.NewTodoDeleter(todoQueriesGateway, todoCommandsGateway)
 	validate := handler.NewValidator()
 	todosServiceServer := handler.NewServer(todoGetter, todoUpdater, todoLister, todoCreator, todoDeleter, validate)
+	authInterceptor := interceptor.NewAuthInterceptor()
 	dbInterceptor := interceptor.NewDBInterceptor(db)
-	server, cleanup2, err := grpc2.NewServer(todosServiceServer, dbInterceptor)
+	server, cleanup2, err := grpc2.NewServer(todosServiceServer, authInterceptor, dbInterceptor)
 	if err != nil {
 		cleanup()
 		return nil, nil, err

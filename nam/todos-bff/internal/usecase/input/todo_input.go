@@ -1,5 +1,11 @@
 package input
 
+import (
+	"time"
+
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/domain/entity"
+)
+
 type GetTodoInput struct {
 	Name string
 }
@@ -10,14 +16,15 @@ type CreateTodoInput struct {
 }
 
 type UpdateTodoInput struct {
-	Name        string
-	Title       *string
-	Description *string
-	Status      *string
+	Name    string
+	Title   *string
+	Content *string
+	Status  *entity.TodoStatus
+	DueDate *time.Time
 }
 
 type ListTodosInput struct {
-	ListName  string
-	PageSize  int32
-	PageToken string
+	Parent string
+	Limit  int
+	Offset int
 }

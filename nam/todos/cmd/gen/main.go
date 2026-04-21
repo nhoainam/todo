@@ -14,6 +14,7 @@ func main() {
 
 	g.ApplyBasic(
 		entity.Todo{},
+		entity.TodoList{},
 	)
 
 	g.Execute()

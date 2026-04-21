@@ -7,5 +7,7 @@ type TodoOutput struct {
 }
 
 type TodoListOutput struct {
-	Todos []*entity.Todo
+	Todos      []*entity.Todo
+	Listname   string
+	TotalCount int
 }

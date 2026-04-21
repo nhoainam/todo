@@ -29,7 +29,12 @@ func NewTodoUpdater(q gateway.TodoQueriesGateway, c gateway.TodoCommandsGateway)
 // 2. Apply only the fields present in the input DTO.
 // 3. Persist the changes.
 func (u *todoUpdater) Update(ctx context.Context, in *input.TodoUpdater) (*output.TodoUpdater, error) {
-	existing, err := u.todoQueriesGateway.Get(ctx, in.Name.TodoID, nil)
+	listID := in.Name.TodoListID
+	userID := in.Name.UserID
+	existing, err := u.todoQueriesGateway.Get(ctx, in.Name.TodoID, &gateway.GetTodoOptions{
+		ListIDEq:    &listID,
+		CreatorIDEq: &userID,
+	})
 	if err != nil {
 		return nil, err
 	}
