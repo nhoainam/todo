@@ -133,3 +133,48 @@ func (c *todoServiceClient) UpdateTodo(ctx context.Context, input *gateway.Updat
 	}
 	return mapper.TodoFromProto(resp.Todo), nil
 }
+
+func (c *todoServiceClient) CreateTodo(ctx context.Context, parent string, input *gateway.CreateTodoInput) (*entity.Todo, error) {
+	if input == nil {
+		return nil, apperrors.NewInvalidParameter("input cannot be nil", nil)
+	}
+	if input.Title == "" {
+		return nil, apperrors.NewInvalidParameter("title is required", nil)
+	}
+
+	var todo = &todopb.Todo{
+		Title:   input.Title,
+		Content: *input.Content,
+		Status:  mapper.TodoStatusToProto(input.Status),
+		DueDate: timestamppb.New(*input.DueDate),
+	}
+
+	req := &todopb.CreateTodoRequest{
+		Parent: parent,
+		Todo:   todo,
+	}
+	if input.DueDate != nil {
+		req.Todo.DueDate = timestamppb.New(*input.DueDate)
+	}
+
+	resp, err := c.client.CreateTodo(ctx, req)
+	if err != nil {
+		return nil, mapGRPCError(err)
+	}
+	return mapper.TodoFromProto(resp.Todo), nil
+}
+
+func (c *todoServiceClient) DeleteTodo(ctx context.Context, input *gateway.DeleteTodoInput) error {
+	if input == nil {
+		return apperrors.NewInvalidParameter("input cannot be nil", nil)
+	}
+	if input.Name == "" {
+		return apperrors.NewInvalidParameter("name is required", nil)
+	}
+
+	_, err := c.client.DeleteTodo(ctx, &todopb.DeleteTodoRequest{Name: input.Name})
+	if err != nil {
+		return mapGRPCError(err)
+	}
+	return nil
+}

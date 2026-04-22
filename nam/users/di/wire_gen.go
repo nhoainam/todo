@@ -21,7 +21,8 @@ import (
 
 func InitializeServer(cfg *config.Config) (*grpc.Server, func(), error) {
 	authServiceGateway := datastore.NewUserReader()
-	userLogin := service.NewLoginService(authServiceGateway)
+	tokenGenerator := service.NewTokenGeneratorService()
+	userLogin := service.NewLoginService(authServiceGateway, tokenGenerator)
 	userLogout := service.NewUserLogoutService(authServiceGateway)
 	userRegister := service.NewUserRegisterService(authServiceGateway)
 	userServiceServer := handler.NewServer(userLogin, userLogout, userRegister)

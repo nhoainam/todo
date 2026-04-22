@@ -14,6 +14,7 @@ import (
 	todov1 "github.com/tuannguyenandpadcojp/fresher26/nam/todos/proto/todo/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // todo_handler.go — gRPC Handler for Todos Service
@@ -242,6 +243,68 @@ func (s *server) UpdateTodo(ctx context.Context, req *todov1.UpdateTodoRequest) 
 	}, nil
 }
 
+func (s *server) CreateTodo(ctx context.Context, req *todov1.CreateTodoRequest) (*todov1.CreateTodoResponse, error) {
+	if req.Todo == nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("todo is required", nil))
+	}
+
+	parent, err := entity.ParseTodoListResourceName(req.GetParent())
+	if err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid todo list resource name", err))
+	}
+	if err := ensureResourceUserMatch(ctx, parent.UserID); err != nil {
+		return nil, toGRPCError(err)
+	}
+
+	in := input.TodoCreator{
+		ListID:    parent.TodoListID,
+		CreatorID: parent.UserID,
+		Title:     req.Todo.Title,
+		Content:   req.Todo.Content,
+		Status:    mapper.PbToStatus(req.Todo.Status),
+	}
+	if req.Todo.DueDate != nil {
+		t := req.Todo.DueDate.AsTime()
+		in.DueDate = &t
+	}
+
+	if err := s.validator.Struct(&in); err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid request", err))
+	}
+
+	out, err := s.todoCreator.Create(ctx, &in)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+
+	return &todov1.CreateTodoResponse{
+		Todo: mapper.TodoToPb(out.Todo),
+	}, nil
+}
+
+func (s *server) DeleteTodo(ctx context.Context, req *todov1.DeleteTodoRequest) (*emptypb.Empty, error) {
+	name, err := entity.ParseTodoResourceName(req.Name)
+	if err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid todo resource name", err))
+	}
+	if err := ensureResourceUserMatch(ctx, name.UserID); err != nil {
+		return nil, toGRPCError(err)
+	}
+
+	in := input.TodoDeleter{
+		Name: *name,
+	}
+
+	if err := s.validator.Struct(&in); err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid request", err))
+	}
+
+	if err := s.todoDeleter.Delete(ctx, &in); err != nil {
+		return nil, toGRPCError(err)
+	}
+
+	return &emptypb.Empty{}, nil
+}
 func ensureResourceUserMatch(ctx context.Context, resourceUserID entity.UserID) error {
 	authenticatedUserID, ok := grpcinterceptor.AuthenticatedUserIDFromContext(ctx)
 	if !ok {

@@ -24,18 +24,12 @@ func NewTodoCreator(c gateway.TodoCommandsGateway, b gateway.Binder) usecase.Tod
 }
 
 func (s *todoCreator) Create(ctx context.Context, in *input.TodoCreator) (*output.TodoCreator, error) {
-	// 1. Start transaction
-	ctx = s.binder.Bind(ctx)
-
-	// 2. Always rollback on panic or early exit if not committed
-	defer s.binder.Rollback(ctx)
-
 	todo := &entity.Todo{
 		ListID:    in.ListID,
 		CreatorID: in.CreatorID,
 		Title:     in.Title,
 		Content:   in.Content,
-		Status:    entity.TodoStatusPENDING,
+		Status:    in.Status,
 		DueDate:   in.DueDate,
 	}
 
@@ -44,8 +38,5 @@ func (s *todoCreator) Create(ctx context.Context, in *input.TodoCreator) (*outpu
 		return nil, err
 	}
 
-	// 3. Commit if everything was successful
-	s.binder.Commit(ctx)
-	
 	return &output.TodoCreator{Todo: created}, nil
 }

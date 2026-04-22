@@ -46,16 +46,15 @@ func (r *todoReader) Get(
 	}
 
 	// 2. Execute query
-	// todo, err := qb.First()
-	// if err != nil {
-	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
-	// 		return nil, nil // Not found -> return nil (NOT an error)
-	// 	}
-	// 	return nil, fmt.Errorf("get todo: %w", err)
-	// }
+	todo, err := qb.First()
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil // Not found -> return nil (NOT an error)
+		}
+		return nil, fmt.Errorf("get todo: %w", err)
+	}
 
-	// return todo, nil
-	return nil, fmt.Errorf("get todo: %w", err)
+	return todo, nil
 }
 
 // List returns a paginated list of todos, filtered by the options provided.

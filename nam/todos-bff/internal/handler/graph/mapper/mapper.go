@@ -60,7 +60,7 @@ func TodoConnectionFromOutput(out *output.TodoListOutput, listName scalar.Resour
 	return &model.TodoConnection{
 		Edges:      edges,
 		PageInfo:   &model.PageInfo{HasNextPage: false}, // For simplicity, we set HasNextPage to false. You can implement proper pagination logic here.
-		ListName:   out.Listname,
+		ListName:   out.ListName,
 		TotalCount: out.TotalCount,
 	}
 }

@@ -18,11 +18,50 @@ import (
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/handler/graph/model"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/handler/graph/scalar"
 	usecaseinput "github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/usecase/input"
+	usecaseoutput "github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/usecase/output"
 )
 
 // CreateTodo is the resolver for the createTodo field.
 func (r *mutationResolver) CreateTodo(ctx context.Context, input model.CreateTodoInput) (*model.CreateTodoPayload, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+	// panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+	if _, err := requireAuthenticatedUserID(ctx); err != nil {
+		return nil, err
+	}
+
+	_, err := entity.ParseTodoListResourceName(string(input.ListName))
+	if err != nil {
+		return nil, apperrors.NewInvalidParameter("invalid create todo resource name", err)
+	}
+
+	status, err := mapper.ToDomainTodoStatus(input.Status)
+	if err != nil {
+		return nil, err
+	}
+
+	createStatus := entity.TodoStatusPENDING
+	if status != nil {
+		createStatus = *status
+	}
+
+	out, err := r.Resolver.TodoCreator.Create(ctx, &usecaseinput.CreateTodoInput{
+		Parent:  string(input.ListName),
+		Title:   input.Title,
+		Content: input.Content,
+		Status:  createStatus,
+		DueDate: func() *time.Time {
+			if input.DueDate == nil {
+				return nil
+			}
+			t := time.Time(*input.DueDate)
+			return &t
+		}(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.CreateTodoPayload{Todo: mapper.TodoFromOutput(&usecaseoutput.TodoOutput{Todo: out.Todo}, input.ListName)}, nil
+
 }
 
 // DeleteTodo is the resolver for the deleteTodo field.
@@ -37,12 +76,13 @@ func (r *mutationResolver) UpdateTodoStatus(ctx context.Context, name scalar.Res
 
 // UpdateTodo is the resolver for the updateTodo field.
 func (r *mutationResolver) UpdateTodo(ctx context.Context, name scalar.ResourceName, input *model.UpdateTodoInput) (*model.UpdateTodoPayload, error) {
-	todoName, err := entity.ParseTodoResourceName(string(name))
+	if _, err := requireAuthenticatedUserID(ctx); err != nil {
+		return nil, err
+	}
+
+	_, err := entity.ParseTodoResourceName(string(name))
 	if err != nil {
 		return nil, apperrors.NewInvalidParameter("invalid todo resource name", err)
-	}
-	if err := ensureResourceUserMatch(ctx, todoName.UserID); err != nil {
-		return nil, err
 	}
 
 	if input == nil {
@@ -76,12 +116,13 @@ func (r *mutationResolver) UpdateTodo(ctx context.Context, name scalar.ResourceN
 
 // Todos is the resolver for the todos field.
 func (r *queryResolver) Todos(ctx context.Context, listName scalar.ResourceName, input *model.TodosInput) (*model.TodoConnection, error) {
-	listResourceName, err := entity.ParseTodoListResourceName(string(listName))
+	if _, err := requireAuthenticatedUserID(ctx); err != nil {
+		return nil, err
+	}
+
+	_, err := entity.ParseTodoListResourceName(string(listName))
 	if err != nil {
 		return nil, apperrors.NewInvalidParameter("invalid todo list resource name", err)
-	}
-	if err := ensureResourceUserMatch(ctx, listResourceName.UserID); err != nil {
-		return nil, err
 	}
 
 	limit := 20
@@ -108,12 +149,13 @@ func (r *queryResolver) Todos(ctx context.Context, listName scalar.ResourceName,
 
 // Todo is the resolver for the todo field.
 func (r *queryResolver) Todo(ctx context.Context, name scalar.ResourceName) (*model.Todo, error) {
-	todoName, err := entity.ParseTodoResourceName(string(name))
+	if _, err := requireAuthenticatedUserID(ctx); err != nil {
+		return nil, err
+	}
+
+	_, err := entity.ParseTodoResourceName(string(name))
 	if err != nil {
 		return nil, apperrors.NewInvalidParameter("invalid todo resource name", err)
-	}
-	if err := ensureResourceUserMatch(ctx, todoName.UserID); err != nil {
-		return nil, err
 	}
 
 	out, err := r.TodoGetter.GetTodo(ctx, &usecaseinput.GetTodoInput{Name: string(name)})

@@ -43,7 +43,7 @@ func (s *todoService) ListTodos(ctx context.Context, in *input.ListTodosInput) (
 
 	return &output.TodoListOutput{
 		Todos:      result.Items,
-		Listname:   result.ListName,
+		ListName:   result.ListName,
 		TotalCount: int(result.TotalCount),
 	}, nil
 }

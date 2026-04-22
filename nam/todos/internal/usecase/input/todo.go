@@ -36,6 +36,7 @@ type TodoCreator struct {
 	DueDate   *time.Time
 	ListID    entity.TodoListID
 	CreatorID entity.UserID
+	Status    entity.TodoStatus
 }
 
 type TodoUpdater struct {

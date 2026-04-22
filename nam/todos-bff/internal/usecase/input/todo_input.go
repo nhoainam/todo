@@ -11,8 +11,11 @@ type GetTodoInput struct {
 }
 
 type CreateTodoInput struct {
-	Title       string
-	Description string
+	Parent  string
+	Title   string
+	Content *string
+	DueDate *time.Time
+	Status  entity.TodoStatus
 }
 
 type UpdateTodoInput struct {

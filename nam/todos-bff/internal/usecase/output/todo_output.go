@@ -8,6 +8,18 @@ type TodoOutput struct {
 
 type TodoListOutput struct {
 	Todos      []*entity.Todo
-	Listname   string
+	ListName   string
 	TotalCount int
+}
+
+type CreateTodoOutput struct {
+	*entity.Todo
+}
+
+type UpdateTodoOutput struct {
+	*entity.Todo
+}
+
+type DeleteTodoOutput struct {
+	// No fields needed for delete output, but you can add metadata if necessary
 }

@@ -16,6 +16,10 @@ type TodoUpdater interface {
 	UpdateTodo(ctx context.Context, in *input.UpdateTodoInput) (*output.TodoOutput, error)
 }
 
+type TodoCreator interface {
+	Create(ctx context.Context, in *input.CreateTodoInput) (*output.CreateTodoOutput, error)
+}
+
 type AuthLogin interface {
 	Login(ctx context.Context, in *input.LoginInput) (*output.LoginOutput, error)
 }

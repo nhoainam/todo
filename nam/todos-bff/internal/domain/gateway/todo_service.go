@@ -65,10 +65,21 @@ type UpdateTodoInput struct {
 	DueDate *time.Time
 }
 
+type CreateTodoInput struct {
+	Title   string
+	Content *string
+	Status  entity.TodoStatus
+	DueDate *time.Time
+}
+
+type DeleteTodoInput struct {
+	Name string
+}
+
 type TodoServiceGateway interface {
 	GetTodo(ctx context.Context, name string) (*entity.Todo, error)
 	ListTodos(ctx context.Context, parent string, opts *ListTodosOptions) (*OffsetPageResult[*entity.Todo], error)
-	// CreateTodo(ctx context.Context, input *CreateTodoInput) (*entity.Todo, error)
+	CreateTodo(ctx context.Context, parent string, input *CreateTodoInput) (*entity.Todo, error)
 	UpdateTodo(ctx context.Context, input *UpdateTodoInput) (*entity.Todo, error)
-	// DeleteTodo(ctx context.Context, name string) error
+	DeleteTodo(ctx context.Context, input *DeleteTodoInput) error
 }

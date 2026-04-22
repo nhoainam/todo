@@ -1,7 +1,8 @@
-adapter: mysql2      # loại database: mysql2, postgresql, sqlite3
-encoding: utf8       # encoding
-database: rGPC       # tên database
-username: root       # username
-password: nhn1832004   # password (nếu có)
-host: localhost      # host (mặc định localhost)
-port: 3306           # port (mặc định 3306)
+adapter: mysql2
+encoding: utf8mb4
+# Lấy từ .env, nếu không có thì dùng mặc định là '127.0.0.1'
+host: <%= ENV['DB_HOST'] || '127.0.0.1' %>
+port: <%= ENV['DB_PORT'] || 3306 %>
+database: <%= ENV['DB_NAME'] %>
+username: <%= ENV['DB_USER'] %>
+password: <%= ENV['DB_PASSWORD'] %>

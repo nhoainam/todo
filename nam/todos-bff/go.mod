@@ -7,6 +7,7 @@ tool github.com/99designs/gqlgen
 require (
 	github.com/99designs/gqlgen v0.17.89
 	github.com/go-chi/chi/v5 v5.2.5
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/wire v0.7.0
 	github.com/graph-gophers/dataloader/v7 v7.1.3
 	github.com/vektah/gqlparser/v2 v2.5.32
@@ -16,7 +17,6 @@ require (
 
 require (
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect

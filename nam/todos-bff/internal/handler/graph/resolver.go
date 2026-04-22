@@ -28,7 +28,7 @@ import (
 type Resolver struct {
 	TodoGetter  usecase.TodoGetter
 	TodoUpdater usecase.TodoUpdater
-	// TodoCreator usecase.TodoCreator
+	TodoCreator usecase.TodoCreator
 	// TodoDeleter usecase.TodoDeleter
 	// TodoLister  usecase.TodoLister
 	AuthLogin    usecase.AuthLogin
