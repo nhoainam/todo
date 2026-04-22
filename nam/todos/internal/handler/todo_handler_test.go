@@ -69,6 +69,7 @@ import (
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/apperrors"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/entity"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler"
+	grpcinterceptor "github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler/grpc/interceptor"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase/input"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase/output"
@@ -104,10 +105,20 @@ func (m *mockTodoUpdater) Update(_ context.Context, in *input.TodoUpdater) (*out
 	return nil, nil
 }
 
-// mockTodoLister satisfies usecase.TodoLister with a no-op.
-type mockTodoLister struct{}
+type mockTodoLister struct {
+	calledWith *input.TodoLister
+	returnOut  *output.TodoLister
+	returnErr  error
+}
 
-func (m *mockTodoLister) List(_ context.Context, _ *input.TodoLister) (*output.TodoLister, error) {
+func (m *mockTodoLister) List(_ context.Context, in *input.TodoLister) (*output.TodoLister, error) {
+	m.calledWith = in
+	if m.returnErr != nil {
+		return nil, m.returnErr
+	}
+	if m.returnOut != nil {
+		return m.returnOut, nil
+	}
 	return &output.TodoLister{}, nil
 }
 
@@ -139,6 +150,10 @@ var _ usecase.TodoDeleter = (*mockTodoDeleter)(nil)
 // newTestServer constructs a handler.server ready for unit testing.
 func newTestServer(getter usecase.TodoGetter) todov1.TodosServiceServer {
 	return handler.NewServer(getter, &mockTodoUpdater{}, &mockTodoLister{}, &mockTodoCreator{}, &mockTodoDeleter{}, validator.New())
+}
+
+func authenticatedContext(userID entity.UserID) context.Context {
+	return grpcinterceptor.WithAuthenticatedUserID(context.Background(), userID)
 }
 
 // mustStatusCode asserts the gRPC status code of an error and returns it.
@@ -185,7 +200,7 @@ func TestGetTodo_HappyPath(t *testing.T) {
 
 	srv := newTestServer(mockGetter)
 
-	resp, err := srv.GetTodo(context.Background(), &todov1.GetTodoRequest{
+	resp, err := srv.GetTodo(authenticatedContext(100), &todov1.GetTodoRequest{
 		Name: "users/100/todo-lists/200/todos/456",
 	})
 	if err != nil {
@@ -233,6 +248,9 @@ func TestGetTodo_InvalidResourceName(t *testing.T) {
 		{"empty name", ""},
 		{"wrong format", "todos/456"},
 		{"non-numeric id", "users/abc/todo-lists/200/todos/456"},
+		{"zero user id", "users/0/todo-lists/200/todos/456"},
+		{"zero todo list id", "users/100/todo-lists/0/todos/456"},
+		{"zero todo id", "users/100/todo-lists/200/todos/0"},
 	}
 
 	for _, tc := range cases {
@@ -255,6 +273,34 @@ func TestGetTodo_InvalidResourceName(t *testing.T) {
 	}
 }
 
+func TestGetTodo_Unauthenticated(t *testing.T) {
+	mockGetter := &mockTodoGetter{}
+	srv := newTestServer(mockGetter)
+
+	_, err := srv.GetTodo(context.Background(), &todov1.GetTodoRequest{
+		Name: "users/1/todo-lists/1/todos/1",
+	})
+
+	mustStatusCode(t, err, codes.Unauthenticated)
+	if mockGetter.calledWith != nil {
+		t.Error("usecase.Get should not have been called when request is unauthenticated")
+	}
+}
+
+func TestGetTodo_AuthenticatedUserMismatch(t *testing.T) {
+	mockGetter := &mockTodoGetter{}
+	srv := newTestServer(mockGetter)
+
+	_, err := srv.GetTodo(authenticatedContext(999), &todov1.GetTodoRequest{
+		Name: "users/1/todo-lists/1/todos/1",
+	})
+
+	mustStatusCode(t, err, codes.PermissionDenied)
+	if mockGetter.calledWith != nil {
+		t.Error("usecase.Get should not have been called for forbidden resource access")
+	}
+}
+
 // TestGetTodo_NotFound validates Step 4 (Execute) error mapping.
 // When the usecase returns an apperrors.NotFound error the handler must
 // translate it to gRPC codes.NotFound.
@@ -265,7 +311,7 @@ func TestGetTodo_NotFound(t *testing.T) {
 
 	srv := newTestServer(mockGetter)
 
-	_, err := srv.GetTodo(context.Background(), &todov1.GetTodoRequest{
+	_, err := srv.GetTodo(authenticatedContext(1), &todov1.GetTodoRequest{
 		Name: "users/1/todo-lists/1/todos/999",
 	})
 
@@ -282,7 +328,7 @@ func TestGetTodo_InternalError(t *testing.T) {
 
 	srv := newTestServer(mockGetter)
 
-	_, err := srv.GetTodo(context.Background(), &todov1.GetTodoRequest{
+	_, err := srv.GetTodo(authenticatedContext(1), &todov1.GetTodoRequest{
 		Name: "users/1/todo-lists/1/todos/1",
 	})
 
@@ -298,9 +344,25 @@ func TestGetTodo_AuthZError(t *testing.T) {
 
 	srv := newTestServer(mockGetter)
 
-	_, err := srv.GetTodo(context.Background(), &todov1.GetTodoRequest{
+	_, err := srv.GetTodo(authenticatedContext(1), &todov1.GetTodoRequest{
 		Name: "users/1/todo-lists/1/todos/1",
 	})
 
 	mustStatusCode(t, err, codes.PermissionDenied)
+}
+
+func TestListTodos_ParentListNotFound(t *testing.T) {
+	listUsecase := &mockTodoLister{returnErr: apperrors.NewNotFound("todo list not found", nil)}
+	srv := handler.NewServer(&mockTodoGetter{}, &mockTodoUpdater{}, listUsecase, &mockTodoCreator{}, &mockTodoDeleter{}, validator.New())
+
+	_, err := srv.ListTodos(authenticatedContext(5), &todov1.ListTodosRequest{
+		Parent: "users/5/todo-lists/2",
+		Limit:  20,
+		Offset: 0,
+	})
+
+	mustStatusCode(t, err, codes.NotFound)
+	if listUsecase.calledWith == nil {
+		t.Fatal("usecase.List should be called")
+	}
 }

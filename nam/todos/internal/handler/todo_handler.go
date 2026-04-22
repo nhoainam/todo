@@ -7,12 +7,14 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/apperrors"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/domain/entity"
+	grpcinterceptor "github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler/grpc/interceptor"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/handler/mapper"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos/internal/usecase/input"
 	todov1 "github.com/tuannguyenandpadcojp/fresher26/nam/todos/proto/todo/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // todo_handler.go — gRPC Handler for Todos Service
@@ -97,6 +99,9 @@ func (s *server) GetTodo(ctx context.Context, req *todov1.GetTodoRequest) (*todo
 	if err != nil {
 		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid todo resource name", err))
 	}
+	if err := ensureResourceUserMatch(ctx, name.UserID); err != nil {
+		return nil, toGRPCError(err)
+	}
 
 	// Step 2: Build usecase input DTO
 	in := input.TodoGetter{
@@ -120,6 +125,57 @@ func (s *server) GetTodo(ctx context.Context, req *todov1.GetTodoRequest) (*todo
 	}, nil
 }
 
+func (s *server) ListTodos(ctx context.Context, req *todov1.ListTodosRequest) (*todov1.ListTodosResponse, error) {
+	// Step 1: Parse proto request -> domain types
+	parent, err := entity.ParseTodoListResourceName(req.GetParent())
+	if err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid todo list resource name", err))
+	}
+	if err := ensureResourceUserMatch(ctx, parent.UserID); err != nil {
+		return nil, toGRPCError(err)
+	}
+
+	var statusFilter *entity.TodoStatus
+	if req.Status != nil {
+		s := mapper.PbToStatus(req.GetStatus())
+		statusFilter = &s
+	}
+
+	// Step 2: Build usecase input DTO
+	in := input.TodoLister{
+		Name: entity.TodoListResourceName{
+			UserID:     parent.UserID,
+			TodoListID: parent.TodoListID,
+		},
+		Status: statusFilter,
+		Limit:  req.GetLimit(),
+		Offset: req.GetOffset(),
+	}
+
+	// Step 3: Validate input
+	if err := s.validator.Struct(&in); err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid request", err))
+	}
+
+	// Step 4: Call usecase
+	out, err := s.todoLister.List(ctx, &in)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+
+	// Step 5: Map domain -> proto response
+	todos := make([]*todov1.Todo, 0, len(out.Todos))
+	for _, t := range out.Todos {
+		todos = append(todos, mapper.TodoToPb(t))
+	}
+
+	return &todov1.ListTodosResponse{
+		Todos:      todos,
+		TotalCount: out.TotalCount,
+		ListName:   out.ListName,
+	}, nil
+}
+
 func (s *server) UpdateTodo(ctx context.Context, req *todov1.UpdateTodoRequest) (*todov1.UpdateTodoResponse, error) {
 	if req.Todo == nil {
 		return nil, toGRPCError(apperrors.NewInvalidParameter("todo is required", nil))
@@ -130,6 +186,9 @@ func (s *server) UpdateTodo(ctx context.Context, req *todov1.UpdateTodoRequest) 
 	if err != nil {
 		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid todo resource name", err))
 	}
+	if err := ensureResourceUserMatch(ctx, name.UserID); err != nil {
+		return nil, toGRPCError(err)
+	}
 
 	// Step 2: Build input DTO — walk the FieldMask and set only the requested pointer fields
 	in := input.TodoUpdater{
@@ -137,8 +196,14 @@ func (s *server) UpdateTodo(ctx context.Context, req *todov1.UpdateTodoRequest) 
 	}
 
 	paths := req.GetUpdateMask().GetPaths()
-	// If the mask is empty, treat it as a full update (all settable fields)
+
+	// 1. Strict Validation: Báo lỗi nếu client quên truyền mask
 	if len(paths) == 0 {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("update_mask is explicitly required", nil))
+	}
+
+	// 2. Explicit Full Update: Client chủ động gửi kí tự "*" để yêu cầu ghi đè toàn bộ
+	if len(paths) == 1 && paths[0] == "*" {
 		paths = []string{"title", "content", "status", "due_date"}
 	}
 
@@ -176,4 +241,84 @@ func (s *server) UpdateTodo(ctx context.Context, req *todov1.UpdateTodoRequest) 
 	return &todov1.UpdateTodoResponse{
 		Todo: mapper.TodoToPb(out.Todo),
 	}, nil
+}
+
+func (s *server) CreateTodo(ctx context.Context, req *todov1.CreateTodoRequest) (*todov1.CreateTodoResponse, error) {
+	if req.Todo == nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("todo is required", nil))
+	}
+
+	parent, err := entity.ParseTodoListResourceName(req.GetParent())
+	if err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid todo list resource name", err))
+	}
+	if err := ensureResourceUserMatch(ctx, parent.UserID); err != nil {
+		return nil, toGRPCError(err)
+	}
+
+	in := input.TodoCreator{
+		ListID:    parent.TodoListID,
+		CreatorID: parent.UserID,
+		Title:     req.Todo.Title,
+		Content:   req.Todo.Content,
+		Status:    mapper.PbToStatus(req.Todo.Status),
+	}
+	if req.Todo.DueDate != nil {
+		t := req.Todo.DueDate.AsTime()
+		in.DueDate = &t
+	}
+
+	if err := s.validator.Struct(&in); err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid request", err))
+	}
+
+	out, err := s.todoCreator.Create(ctx, &in)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+
+	return &todov1.CreateTodoResponse{
+		Todo: mapper.TodoToPb(out.Todo),
+	}, nil
+}
+
+func (s *server) DeleteTodo(ctx context.Context, req *todov1.DeleteTodoRequest) (*emptypb.Empty, error) {
+	name, err := entity.ParseTodoResourceName(req.Name)
+	if err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid todo resource name", err))
+	}
+	if err := ensureResourceUserMatch(ctx, name.UserID); err != nil {
+		return nil, toGRPCError(err)
+	}
+
+	in := input.TodoDeleter{
+		Name: *name,
+	}
+
+	if err := s.validator.Struct(&in); err != nil {
+		return nil, toGRPCError(apperrors.NewInvalidParameter("invalid request", err))
+	}
+
+	if err := s.todoDeleter.Delete(ctx, &in); err != nil {
+		return nil, toGRPCError(err)
+	}
+
+	return &emptypb.Empty{}, nil
+}
+func ensureResourceUserMatch(ctx context.Context, resourceUserID entity.UserID) error {
+	authenticatedUserID, ok := grpcinterceptor.AuthenticatedUserIDFromContext(ctx)
+	if !ok {
+		return apperrors.NewAuthN("authentication required", nil)
+	}
+
+	if authenticatedUserID != resourceUserID {
+		return apperrors.NewAuthZ(
+			"forbidden resource access",
+			nil,
+			apperrors.WithMetadata("authenticated_user_id", authenticatedUserID.Int64()),
+			apperrors.WithMetadata("resource_user_id", resourceUserID.Int64()),
+		)
+	}
+
+	return nil
 }

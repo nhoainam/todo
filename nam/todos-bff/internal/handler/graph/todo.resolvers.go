@@ -8,17 +8,60 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/apperrors"
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/domain/entity"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/handler/dataloader"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/handler/graph/generated"
+	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/handler/graph/mapper"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/handler/graph/model"
 	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/handler/graph/scalar"
-	"github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/usecase/input"
+	usecaseinput "github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/usecase/input"
+	usecaseoutput "github.com/tuannguyenandpadcojp/fresher26/nam/todos-bff/internal/usecase/output"
 )
 
 // CreateTodo is the resolver for the createTodo field.
 func (r *mutationResolver) CreateTodo(ctx context.Context, input model.CreateTodoInput) (*model.CreateTodoPayload, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+	// panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+	if _, err := requireAuthenticatedUserID(ctx); err != nil {
+		return nil, err
+	}
+
+	_, err := entity.ParseTodoListResourceName(string(input.ListName))
+	if err != nil {
+		return nil, apperrors.NewInvalidParameter("invalid create todo resource name", err)
+	}
+
+	status, err := mapper.ToDomainTodoStatus(input.Status)
+	if err != nil {
+		return nil, err
+	}
+
+	createStatus := entity.TodoStatusPENDING
+	if status != nil {
+		createStatus = *status
+	}
+
+	out, err := r.Resolver.TodoCreator.Create(ctx, &usecaseinput.CreateTodoInput{
+		Parent:  string(input.ListName),
+		Title:   input.Title,
+		Content: input.Content,
+		Status:  createStatus,
+		DueDate: func() *time.Time {
+			if input.DueDate == nil {
+				return nil
+			}
+			t := time.Time(*input.DueDate)
+			return &t
+		}(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.CreateTodoPayload{Todo: mapper.TodoFromOutput(&usecaseoutput.TodoOutput{Todo: out.Todo}, input.ListName)}, nil
+
 }
 
 // DeleteTodo is the resolver for the deleteTodo field.
@@ -31,38 +74,117 @@ func (r *mutationResolver) UpdateTodoStatus(ctx context.Context, name scalar.Res
 	panic(fmt.Errorf("not implemented: UpdateTodoStatus - updateTodoStatus"))
 }
 
+// UpdateTodo is the resolver for the updateTodo field.
+func (r *mutationResolver) UpdateTodo(ctx context.Context, name scalar.ResourceName, input *model.UpdateTodoInput) (*model.UpdateTodoPayload, error) {
+	if _, err := requireAuthenticatedUserID(ctx); err != nil {
+		return nil, err
+	}
+
+	_, err := entity.ParseTodoResourceName(string(name))
+	if err != nil {
+		return nil, apperrors.NewInvalidParameter("invalid todo resource name", err)
+	}
+
+	if input == nil {
+		return nil, apperrors.NewInvalidParameter("input is required", nil)
+	}
+
+	status, err := mapper.ToDomainTodoStatus(input.Status)
+	if err != nil {
+		return nil, err
+	}
+
+	var dueDate *time.Time
+	if input.DueDate != nil {
+		t := time.Time(*input.DueDate)
+		dueDate = &t
+	}
+
+	out, err := r.TodoUpdater.UpdateTodo(ctx, &usecaseinput.UpdateTodoInput{
+		Name:    string(name),
+		Title:   input.Title,
+		Content: input.Content,
+		Status:  status,
+		DueDate: dueDate,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.UpdateTodoPayload{Todo: mapper.TodoFromOutput(out, name)}, nil
+}
+
 // Todos is the resolver for the todos field.
 func (r *queryResolver) Todos(ctx context.Context, listName scalar.ResourceName, input *model.TodosInput) (*model.TodoConnection, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
+	if _, err := requireAuthenticatedUserID(ctx); err != nil {
+		return nil, err
+	}
+
+	_, err := entity.ParseTodoListResourceName(string(listName))
+	if err != nil {
+		return nil, apperrors.NewInvalidParameter("invalid todo list resource name", err)
+	}
+
+	limit := 20
+	offset := 0
+	if input != nil {
+		if input.Limit != nil {
+			limit = *input.Limit
+		}
+		if input.Offset != nil {
+			offset = *input.Offset
+		}
+	}
+
+	out, err := r.TodoGetter.ListTodos(ctx, &usecaseinput.ListTodosInput{
+		Parent: string(listName),
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return mapper.TodoConnectionFromOutput(out, listName), nil
 }
 
 // Todo is the resolver for the todo field.
 func (r *queryResolver) Todo(ctx context.Context, name scalar.ResourceName) (*model.Todo, error) {
-	// panic(fmt.Errorf("not implemented: Todo - todo"))
-	out, err := r.TodoGetter.GetTodo(ctx, &input.GetTodoInput{Name: string(name)})
+	if _, err := requireAuthenticatedUserID(ctx); err != nil {
+		return nil, err
+	}
+
+	_, err := entity.ParseTodoResourceName(string(name))
+	if err != nil {
+		return nil, apperrors.NewInvalidParameter("invalid todo resource name", err)
+	}
+
+	out, err := r.TodoGetter.GetTodo(ctx, &usecaseinput.GetTodoInput{Name: string(name)})
 	if err != nil {
 		return nil, err
 	}
-	return &model.Todo{
-		Name:      name,
-		Title:     out.Title,
-		Content:   out.Content,
-		Status:    model.TodoStatus(out.Status),
-		DueDate:   (*scalar.Time)(out.DueDate),
-		CreatedAt: scalar.Time(out.CreatedAt),
-	}, nil
+	return mapper.TodoFromOutput(out, name), nil
 }
 
 // Creator is the resolver for the creator field.
 func (r *todoResolver) Creator(ctx context.Context, obj *model.Todo) (*model.User, error) {
-	// Use DataLoader to batch load Creator avoiding N+1 problem
-	return dataloader.For(ctx).UserLoader.Load(ctx, "creator-for-"+string(obj.Name))()
+	// Use user resource name as the dataloader key so response name is meaningful.
+	name := string(obj.Name)
+	if rn, err := entity.ParseTodoResourceName(name); err == nil {
+		name = fmt.Sprintf("users/%d", rn.UserID)
+	}
+
+	return dataloader.For(ctx).UserLoader.Load(ctx, name)()
 }
 
 // TodoList is the resolver for the todoList field.
 func (r *todoResolver) TodoList(ctx context.Context, obj *model.Todo) (*model.TodoList, error) {
-	// Use DataLoader to batch load TodoList avoiding N+1 problem
-	return dataloader.For(ctx).TodoListLoader.Load(ctx, "todolist-for-"+string(obj.Name))()
+	// Use todo list resource name as the dataloader key so response name is meaningful.
+	name := string(obj.Name)
+	if rn, err := entity.ParseTodoResourceName(name); err == nil {
+		name = fmt.Sprintf("users/%d/todo-lists/%d", rn.UserID, rn.TodoListID)
+	}
+
+	return dataloader.For(ctx).TodoListLoader.Load(ctx, name)()
 }
 
 // Mutation returns generated.MutationResolver implementation.

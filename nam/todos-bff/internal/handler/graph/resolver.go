@@ -26,9 +26,12 @@ import (
 // See: resources/phase-03-graphql-bff.md (resolver pattern)
 
 type Resolver struct {
-	TodoGetter usecase.TodoGetter
-	// TodoCreator usecase.TodoCreator
-	// TodoUpdater usecase.TodoUpdater
+	TodoGetter  usecase.TodoGetter
+	TodoUpdater usecase.TodoUpdater
+	TodoCreator usecase.TodoCreator
 	// TodoDeleter usecase.TodoDeleter
 	// TodoLister  usecase.TodoLister
+	AuthLogin    usecase.AuthLogin
+	AuthLogout   usecase.AuthLogout
+	AuthRegister usecase.AuthRegister
 }

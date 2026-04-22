@@ -28,7 +28,7 @@ func newTodo(db *gorm.DB, opts ...gen.DOOption) todo {
 	tableName := _todo.todoDo.TableName()
 	_todo.ALL = field.NewAsterisk(tableName)
 	_todo.ID = field.NewInt64(tableName, "id")
-	_todo.ListID = field.NewInt64(tableName, "list_id")
+	_todo.ListID = field.NewInt64(tableName, "todo_list_id")
 	_todo.CreatorID = field.NewInt64(tableName, "creator_id")
 	_todo.Title = field.NewString(tableName, "title")
 	_todo.Content = field.NewString(tableName, "content")
@@ -74,7 +74,7 @@ func (t todo) As(alias string) *todo {
 func (t *todo) updateTableName(table string) *todo {
 	t.ALL = field.NewAsterisk(table)
 	t.ID = field.NewInt64(table, "id")
-	t.ListID = field.NewInt64(table, "list_id")
+	t.ListID = field.NewInt64(table, "todo_list_id")
 	t.CreatorID = field.NewInt64(table, "creator_id")
 	t.Title = field.NewString(table, "title")
 	t.Content = field.NewString(table, "content")
@@ -109,7 +109,7 @@ func (t *todo) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 func (t *todo) fillFieldMap() {
 	t.fieldMap = make(map[string]field.Expr, 10)
 	t.fieldMap["id"] = t.ID
-	t.fieldMap["list_id"] = t.ListID
+	t.fieldMap["todo_list_id"] = t.ListID
 	t.fieldMap["creator_id"] = t.CreatorID
 	t.fieldMap["title"] = t.Title
 	t.fieldMap["content"] = t.Content

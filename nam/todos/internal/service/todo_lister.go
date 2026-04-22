@@ -19,9 +19,13 @@ func NewTodoLister(q gateway.TodoQueriesGateway) usecase.TodoLister {
 }
 
 func (l *todoLister) List(ctx context.Context, in *input.TodoLister) (*output.TodoLister, error) {
+	listID := in.Name.TodoListID
+	userID := in.Name.UserID
 	opts := &gateway.ListTodosOptions{
 		Filter: &gateway.TodoFilter{
-			StatusEq: in.Status,
+			ListIDEq:    &listID,
+			CreatorIDEq: &userID,
+			StatusEq:    in.Status,
 		},
 		Pagination: &gateway.OffsetPage{
 			Offset: int(in.Offset),
@@ -36,6 +40,7 @@ func (l *todoLister) List(ctx context.Context, in *input.TodoLister) (*output.To
 
 	return &output.TodoLister{
 		Todos:      result.Items,
+		ListName:   result.ListName,
 		TotalCount: int32(result.TotalCount),
 	}, nil
 }

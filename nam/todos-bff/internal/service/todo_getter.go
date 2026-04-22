@@ -29,3 +29,21 @@ func (s *todoService) GetTodo(ctx context.Context, in *input.GetTodoInput) (*out
 		Todo: entityTodo,
 	}, nil
 }
+
+func (s *todoService) ListTodos(ctx context.Context, in *input.ListTodosInput) (*output.TodoListOutput, error) {
+	result, err := s.todoGateway.ListTodos(ctx, in.Parent, &gateway.ListTodosOptions{
+		Pagination: &gateway.OffsetPage{
+			Limit:  in.Limit,
+			Offset: in.Offset,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &output.TodoListOutput{
+		Todos:      result.Items,
+		ListName:   result.ListName,
+		TotalCount: int(result.TotalCount),
+	}, nil
+}

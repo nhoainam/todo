@@ -19,20 +19,24 @@ type OffsetPage struct {
 type OffsetPageResult[T any] struct {
 	Items      []T
 	TotalCount int64
+	ListName   string
 	Page       *OffsetPage
 }
 
 // TodoFilter holds optional filter conditions for listing todos.
 // All fields are pointers — nil means "no filter on this field".
 type TodoFilter struct {
-	StatusEq   *entity.TodoStatus
-	PriorityEq *entity.Priority
-	DueDateGTE *time.Time
-	DueDateLTE *time.Time
+	ListIDEq    *entity.TodoListID
+	CreatorIDEq *entity.UserID
+	StatusEq    *entity.TodoStatus
+	PriorityEq  *entity.Priority
+	DueDateGTE  *time.Time
+	DueDateLTE  *time.Time
 }
 
 type GetTodoOptions struct {
-	// Add any options for the Get operation
+	ListIDEq    *entity.TodoListID
+	CreatorIDEq *entity.UserID
 }
 
 type ListTodosOptions struct {

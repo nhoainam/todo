@@ -22,12 +22,17 @@ func NewTodoGetter(todoQueriesGateway gateway.TodoQueriesGateway) usecase.TodoGe
 }
 
 func (g *todoGetter) Get(ctx context.Context, in *input.TodoGetter) (*output.TodoGetter, error) {
-	todo, err := g.todoQueriesGateway.Get(ctx, in.Name.TodoID, nil)
+	listID := in.Name.TodoListID
+	userID := in.Name.UserID
+	todo, err := g.todoQueriesGateway.Get(ctx, in.Name.TodoID, &gateway.GetTodoOptions{
+		ListIDEq:    &listID,
+		CreatorIDEq: &userID,
+	})
 	if err != nil {
 		return nil, err
 	}
 	if todo == nil {
-		return nil, apperrors.NewNotFound("todo not found", err, nil)
+		return nil, apperrors.NewNotFound("todo not found", nil)
 	}
 	return &output.TodoGetter{Todo: todo}, nil
 }

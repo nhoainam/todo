@@ -35,6 +35,7 @@ type OffsetPage struct {
 type OffsetPageResult[T any] struct {
 	Items      []T
 	TotalCount int64
+	ListName   string
 	Page       *OffsetPage
 }
 
@@ -55,10 +56,30 @@ type ListTodosOptions struct {
 	Filter     *TodoFilter
 	Pagination *OffsetPage
 }
+
+type UpdateTodoInput struct {
+	Name    string
+	Title   *string
+	Content *string
+	Status  *entity.TodoStatus
+	DueDate *time.Time
+}
+
+type CreateTodoInput struct {
+	Title   string
+	Content *string
+	Status  entity.TodoStatus
+	DueDate *time.Time
+}
+
+type DeleteTodoInput struct {
+	Name string
+}
+
 type TodoServiceGateway interface {
 	GetTodo(ctx context.Context, name string) (*entity.Todo, error)
-	// ListTodos(ctx context.Context, listName string, opts *ListTodosOptions) ([]*entity.Todo, error)
-	// CreateTodo(ctx context.Context, input *CreateTodoInput) (*entity.Todo, error)
-	// UpdateTodo(ctx context.Context, input *UpdateTodoInput) (*entity.Todo, error)
-	// DeleteTodo(ctx context.Context, name string) error
+	ListTodos(ctx context.Context, parent string, opts *ListTodosOptions) (*OffsetPageResult[*entity.Todo], error)
+	CreateTodo(ctx context.Context, parent string, input *CreateTodoInput) (*entity.Todo, error)
+	UpdateTodo(ctx context.Context, input *UpdateTodoInput) (*entity.Todo, error)
+	DeleteTodo(ctx context.Context, input *DeleteTodoInput) error
 }

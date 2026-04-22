@@ -1,0 +1,55 @@
+syntax = "proto3"; 
+
+package user.v1;
+
+option go_package = "github.com/tuannguyenandpadcojp/fresher26/nam/users/proto/user/v1;userv1";
+
+import "google/protobuf/timestamp.proto";
+
+message User {
+    int64 id = 1;
+    string username = 2;
+    google.protobuf.Timestamp created_at = 3;
+    google.protobuf.Timestamp updated_at = 4;
+}
+
+message GetUserRequest {
+    int64 id = 1;
+}
+
+message GetUserResponse {
+    User user = 1;
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    User user = 1;
+    string access_token = 2;
+}
+
+message LogoutRequest {
+    int64 user_id = 1;
+}
+
+message LogoutResponse {
+}
+
+message RegisterRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message RegisterResponse {
+    User user = 1;
+}
+
+service UserService {
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+    rpc Login(LoginRequest) returns (LoginResponse);
+    rpc Logout(LogoutRequest) returns (LogoutResponse);
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+}

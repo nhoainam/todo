@@ -31,7 +31,7 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	
+
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)

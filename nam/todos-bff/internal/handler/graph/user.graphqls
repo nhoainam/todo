@@ -1,0 +1,27 @@
+extend type Mutation {
+  login(input: LoginInput!): LoginPayload!
+  logout: LogoutPayload!
+  register(input: RegisterInput!): RegisterPayload!
+}
+
+input LoginInput {
+  username: String!
+  password: String!
+}
+
+type LoginPayload {
+  user: User!
+}
+
+type LogoutPayload {
+  success: Boolean!
+}
+
+input RegisterInput {
+  username: String!
+  password: String!
+}
+
+type RegisterPayload {
+  user: User!
+}

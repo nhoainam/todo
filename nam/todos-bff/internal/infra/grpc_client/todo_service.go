@@ -10,6 +10,8 @@ import (
 	todopb "github.com/tuannguyenandpadcojp/fresher26/nam/todos/proto/todo/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // todo_service.go — TodoService gRPC Client Implementation
@@ -66,5 +68,113 @@ func (c *todoServiceClient) GetTodo(ctx context.Context, name string) (*entity.T
 	if err != nil {
 		return nil, mapGRPCError(err) // gRPC status → AppError
 	}
-	return mapper.TodoFromProto(resp), nil // Map proto response to domain entity
+	return mapper.TodoFromProto(resp.Todo), nil // Map proto response to domain entity
+}
+
+func (c *todoServiceClient) ListTodos(ctx context.Context, parent string, opts *gateway.ListTodosOptions) (*gateway.OffsetPageResult[*entity.Todo], error) {
+	limit := int32(20)
+	offset := int32(0)
+	if opts != nil && opts.Pagination != nil {
+		limit = int32(opts.Pagination.Limit)
+		offset = int32(opts.Pagination.Offset)
+	}
+
+	resp, err := c.client.ListTodos(ctx, &todopb.ListTodosRequest{Parent: parent, Limit: limit, Offset: offset})
+	if err != nil {
+		return nil, mapGRPCError(err)
+	}
+	return &gateway.OffsetPageResult[*entity.Todo]{
+		Items:      mapper.ListTodosFromProto(resp),
+		TotalCount: int64(resp.GetTotalCount()),
+		ListName:   resp.GetListName(),
+		Page: &gateway.OffsetPage{
+			Offset: int(offset),
+			Limit:  int(limit),
+		},
+	}, nil
+}
+
+func (c *todoServiceClient) UpdateTodo(ctx context.Context, input *gateway.UpdateTodoInput) (*entity.Todo, error) {
+	if input == nil {
+		return nil, apperrors.NewInvalidParameter("input cannot be nil", nil)
+	}
+
+	if input.Name == "" {
+		return nil, apperrors.NewInvalidParameter("name is required", nil)
+	}
+	if input.Title == nil && input.Content == nil && input.Status == nil && input.DueDate == nil {
+		return nil, apperrors.NewInvalidParameter("at least one field to update must be provided", nil)
+	}
+	todo := &todopb.Todo{Name: input.Name}
+	var updateMask []string
+	if input.Title != nil {
+		todo.Title = *input.Title
+		updateMask = append(updateMask, "title")
+	}
+	if input.Content != nil {
+		todo.Content = *input.Content
+		updateMask = append(updateMask, "content")
+	}
+	if input.Status != nil {
+		todo.Status = mapper.TodoStatusToProto(*input.Status)
+		updateMask = append(updateMask, "status")
+	}
+	if input.DueDate != nil {
+		todo.DueDate = timestamppb.New(*input.DueDate)
+		updateMask = append(updateMask, "due_date")
+	}
+	req := &todopb.UpdateTodoRequest{
+		Todo:       todo,
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: updateMask},
+	}
+	resp, err := c.client.UpdateTodo(ctx, req)
+	if err != nil {
+		return nil, mapGRPCError(err)
+	}
+	return mapper.TodoFromProto(resp.Todo), nil
+}
+
+func (c *todoServiceClient) CreateTodo(ctx context.Context, parent string, input *gateway.CreateTodoInput) (*entity.Todo, error) {
+	if input == nil {
+		return nil, apperrors.NewInvalidParameter("input cannot be nil", nil)
+	}
+	if input.Title == "" {
+		return nil, apperrors.NewInvalidParameter("title is required", nil)
+	}
+
+	var todo = &todopb.Todo{
+		Title:   input.Title,
+		Content: *input.Content,
+		Status:  mapper.TodoStatusToProto(input.Status),
+		DueDate: timestamppb.New(*input.DueDate),
+	}
+
+	req := &todopb.CreateTodoRequest{
+		Parent: parent,
+		Todo:   todo,
+	}
+	if input.DueDate != nil {
+		req.Todo.DueDate = timestamppb.New(*input.DueDate)
+	}
+
+	resp, err := c.client.CreateTodo(ctx, req)
+	if err != nil {
+		return nil, mapGRPCError(err)
+	}
+	return mapper.TodoFromProto(resp.Todo), nil
+}
+
+func (c *todoServiceClient) DeleteTodo(ctx context.Context, input *gateway.DeleteTodoInput) error {
+	if input == nil {
+		return apperrors.NewInvalidParameter("input cannot be nil", nil)
+	}
+	if input.Name == "" {
+		return apperrors.NewInvalidParameter("name is required", nil)
+	}
+
+	_, err := c.client.DeleteTodo(ctx, &todopb.DeleteTodoRequest{Name: input.Name})
+	if err != nil {
+		return mapGRPCError(err)
+	}
+	return nil
 }

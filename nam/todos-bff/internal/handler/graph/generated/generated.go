@@ -47,20 +47,35 @@ type ComplexityRoot struct {
 		Success func(childComplexity int) int
 	}
 
+	LoginPayload struct {
+		User func(childComplexity int) int
+	}
+
+	LogoutPayload struct {
+		Success func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateTodo       func(childComplexity int, input model.CreateTodoInput) int
 		DeleteTodo       func(childComplexity int, name scalar.ResourceName) int
+		Login            func(childComplexity int, input model.LoginInput) int
+		Logout           func(childComplexity int) int
+		Register         func(childComplexity int, input model.RegisterInput) int
+		UpdateTodo       func(childComplexity int, name scalar.ResourceName, input *model.UpdateTodoInput) int
 		UpdateTodoStatus func(childComplexity int, name scalar.ResourceName, status model.TodoStatus) int
 	}
 
 	PageInfo struct {
-		EndCursor   func(childComplexity int) int
 		HasNextPage func(childComplexity int) int
 	}
 
 	Query struct {
 		Todo  func(childComplexity int, name scalar.ResourceName) int
 		Todos func(childComplexity int, listName scalar.ResourceName, input *model.TodosInput) int
+	}
+
+	RegisterPayload struct {
+		User func(childComplexity int) int
 	}
 
 	Todo struct {
@@ -75,13 +90,14 @@ type ComplexityRoot struct {
 	}
 
 	TodoConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		ListName   func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	TodoEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
+		Node func(childComplexity int) int
 	}
 
 	TodoList struct {
@@ -94,13 +110,17 @@ type ComplexityRoot struct {
 		Name        func(childComplexity int) int
 	}
 
+	UpdateTodoPayload struct {
+		Todo func(childComplexity int) int
+	}
+
 	UpdateTodoStatusPayload struct {
 		Todo func(childComplexity int) int
 	}
 
 	User struct {
-		DisplayName func(childComplexity int) int
-		Name        func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Username func(childComplexity int) int
 	}
 }
 
@@ -108,6 +128,10 @@ type MutationResolver interface {
 	CreateTodo(ctx context.Context, input model.CreateTodoInput) (*model.CreateTodoPayload, error)
 	DeleteTodo(ctx context.Context, name scalar.ResourceName) (*model.DeleteTodoPayload, error)
 	UpdateTodoStatus(ctx context.Context, name scalar.ResourceName, status model.TodoStatus) (*model.UpdateTodoStatusPayload, error)
+	UpdateTodo(ctx context.Context, name scalar.ResourceName, input *model.UpdateTodoInput) (*model.UpdateTodoPayload, error)
+	Login(ctx context.Context, input model.LoginInput) (*model.LoginPayload, error)
+	Logout(ctx context.Context) (*model.LogoutPayload, error)
+	Register(ctx context.Context, input model.RegisterInput) (*model.RegisterPayload, error)
 }
 type QueryResolver interface {
 	Todos(ctx context.Context, listName scalar.ResourceName, input *model.TodosInput) (*model.TodoConnection, error)
@@ -146,6 +170,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.DeleteTodoPayload.Success(childComplexity), true
 
+	case "LoginPayload.user":
+		if e.ComplexityRoot.LoginPayload.User == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LoginPayload.User(childComplexity), true
+
+	case "LogoutPayload.success":
+		if e.ComplexityRoot.LogoutPayload.Success == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LogoutPayload.Success(childComplexity), true
+
 	case "Mutation.createTodo":
 		if e.ComplexityRoot.Mutation.CreateTodo == nil {
 			break
@@ -168,6 +206,45 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteTodo(childComplexity, args["name"].(scalar.ResourceName)), true
+	case "Mutation.login":
+		if e.ComplexityRoot.Mutation.Login == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_login_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.Login(childComplexity, args["input"].(model.LoginInput)), true
+	case "Mutation.logout":
+		if e.ComplexityRoot.Mutation.Logout == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.Logout(childComplexity), true
+	case "Mutation.register":
+		if e.ComplexityRoot.Mutation.Register == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_register_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.Register(childComplexity, args["input"].(model.RegisterInput)), true
+	case "Mutation.updateTodo":
+		if e.ComplexityRoot.Mutation.UpdateTodo == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateTodo_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateTodo(childComplexity, args["name"].(scalar.ResourceName), args["input"].(*model.UpdateTodoInput)), true
 	case "Mutation.updateTodoStatus":
 		if e.ComplexityRoot.Mutation.UpdateTodoStatus == nil {
 			break
@@ -180,12 +257,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Mutation.UpdateTodoStatus(childComplexity, args["name"].(scalar.ResourceName), args["status"].(model.TodoStatus)), true
 
-	case "PageInfo.endCursor":
-		if e.ComplexityRoot.PageInfo.EndCursor == nil {
-			break
-		}
-
-		return e.ComplexityRoot.PageInfo.EndCursor(childComplexity), true
 	case "PageInfo.hasNextPage":
 		if e.ComplexityRoot.PageInfo.HasNextPage == nil {
 			break
@@ -215,6 +286,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Todos(childComplexity, args["listName"].(scalar.ResourceName), args["input"].(*model.TodosInput)), true
+
+	case "RegisterPayload.user":
+		if e.ComplexityRoot.RegisterPayload.User == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RegisterPayload.User(childComplexity), true
 
 	case "Todo.content":
 		if e.ComplexityRoot.Todo.Content == nil {
@@ -271,19 +349,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TodoConnection.Edges(childComplexity), true
+	case "TodoConnection.listName":
+		if e.ComplexityRoot.TodoConnection.ListName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TodoConnection.ListName(childComplexity), true
 	case "TodoConnection.pageInfo":
 		if e.ComplexityRoot.TodoConnection.PageInfo == nil {
 			break
 		}
 
 		return e.ComplexityRoot.TodoConnection.PageInfo(childComplexity), true
-
-	case "TodoEdge.cursor":
-		if e.ComplexityRoot.TodoEdge.Cursor == nil {
+	case "TodoConnection.totalCount":
+		if e.ComplexityRoot.TodoConnection.TotalCount == nil {
 			break
 		}
 
-		return e.ComplexityRoot.TodoEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.TodoConnection.TotalCount(childComplexity), true
+
 	case "TodoEdge.node":
 		if e.ComplexityRoot.TodoEdge.Node == nil {
 			break
@@ -317,6 +401,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.TodoTag.Name(childComplexity), true
 
+	case "UpdateTodoPayload.todo":
+		if e.ComplexityRoot.UpdateTodoPayload.Todo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UpdateTodoPayload.Todo(childComplexity), true
+
 	case "UpdateTodoStatusPayload.todo":
 		if e.ComplexityRoot.UpdateTodoStatusPayload.Todo == nil {
 			break
@@ -324,18 +415,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.UpdateTodoStatusPayload.Todo(childComplexity), true
 
-	case "User.displayName":
-		if e.ComplexityRoot.User.DisplayName == nil {
+	case "User.ID":
+		if e.ComplexityRoot.User.ID == nil {
 			break
 		}
 
-		return e.ComplexityRoot.User.DisplayName(childComplexity), true
-	case "User.name":
-		if e.ComplexityRoot.User.Name == nil {
+		return e.ComplexityRoot.User.ID(childComplexity), true
+	case "User.Username":
+		if e.ComplexityRoot.User.Username == nil {
 			break
 		}
 
-		return e.ComplexityRoot.User.Name(childComplexity), true
+		return e.ComplexityRoot.User.Username(childComplexity), true
 
 	}
 	return 0, false
@@ -346,7 +437,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCreateTodoInput,
+		ec.unmarshalInputLoginInput,
+		ec.unmarshalInputRegisterInput,
 		ec.unmarshalInputTodosInput,
+		ec.unmarshalInputUpdateTodoInput,
 	)
 	first := true
 
@@ -486,6 +580,7 @@ type Mutation {
   createTodo(input: CreateTodoInput!): CreateTodoPayload!
   deleteTodo(name: ResourceName!): DeleteTodoPayload! @hasPermission(permissions: [TODO_DELETE]) @validateInput
   updateTodoStatus(name: ResourceName!, status: TodoStatus!): UpdateTodoStatusPayload!
+  updateTodo(name: ResourceName!, input: UpdateTodoInput): UpdateTodoPayload!
 }
 enum Permission {
   TODO_DELETE
@@ -499,8 +594,8 @@ enum TodoStatus {
 }
 
 type User {
-  name: ResourceName!
-  displayName: String!
+  Username: String!
+  ID: Int!
 }
 
 type TodoList {
@@ -520,17 +615,17 @@ input TodosInput {
 
 type TodoEdge {
   node: Todo!
-  cursor: String!
 }
 
 type PageInfo {
   hasNextPage: Boolean!
-  endCursor: String
 }
 
 type TodoConnection {
+  listName: String!
   edges: [TodoEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 
@@ -555,7 +650,44 @@ type UpdateTodoStatusPayload {
   todo: Todo!
 }
 
+input UpdateTodoInput {
+  title: String
+  content: String
+  status: TodoStatus
+  dueDate: Time
+}
+
+type UpdateTodoPayload {
+  todo: Todo!
+}
 `, BuiltIn: false},
+	{Name: "../user.graphqls", Input: `extend type Mutation {
+  login(input: LoginInput!): LoginPayload!
+  logout: LogoutPayload!
+  register(input: RegisterInput!): RegisterPayload!
+}
+
+input LoginInput {
+  username: String!
+  password: String!
+}
+
+type LoginPayload {
+  user: User!
+}
+
+type LogoutPayload {
+  success: Boolean!
+}
+
+input RegisterInput {
+  username: String!
+  password: String!
+}
+
+type RegisterPayload {
+  user: User!
+}`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -596,6 +728,28 @@ func (ec *executionContext) field_Mutation_deleteTodo_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNLoginInput2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐLoginInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_register_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRegisterInput2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐRegisterInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateTodoStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -609,6 +763,22 @@ func (ec *executionContext) field_Mutation_updateTodoStatus_args(ctx context.Con
 		return nil, err
 	}
 	args["status"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateTodo_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "name", ec.unmarshalNResourceName2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋscalarᚐResourceName)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalOUpdateTodoInput2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐUpdateTodoInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -768,6 +938,70 @@ func (ec *executionContext) _DeleteTodoPayload_success(ctx context.Context, fiel
 func (ec *executionContext) fieldContext_DeleteTodoPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteTodoPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LoginPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.LoginPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LoginPayload_user,
+		func(ctx context.Context) (any, error) {
+			return obj.User, nil
+		},
+		nil,
+		ec.marshalNUser2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐUser,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LoginPayload_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Username":
+				return ec.fieldContext_User_Username(ctx, field)
+			case "ID":
+				return ec.fieldContext_User_ID(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LogoutPayload_success(ctx context.Context, field graphql.CollectedField, obj *model.LogoutPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LogoutPayload_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LogoutPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LogoutPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -938,6 +1172,174 @@ func (ec *executionContext) fieldContext_Mutation_updateTodoStatus(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateTodo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateTodo,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateTodo(ctx, fc.Args["name"].(scalar.ResourceName), fc.Args["input"].(*model.UpdateTodoInput))
+		},
+		nil,
+		ec.marshalNUpdateTodoPayload2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐUpdateTodoPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateTodo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "todo":
+				return ec.fieldContext_UpdateTodoPayload_todo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateTodoPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateTodo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_login,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().Login(ctx, fc.Args["input"].(model.LoginInput))
+		},
+		nil,
+		ec.marshalNLoginPayload2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐLoginPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "user":
+				return ec.fieldContext_LoginPayload_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LoginPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_login_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_logout(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_logout,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().Logout(ctx)
+		},
+		nil,
+		ec.marshalNLogoutPayload2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐLogoutPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_logout(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_LogoutPayload_success(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LogoutPayload", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_register(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_register,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().Register(ctx, fc.Args["input"].(model.RegisterInput))
+		},
+		nil,
+		ec.marshalNRegisterPayload2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐRegisterPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_register(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "user":
+				return ec.fieldContext_RegisterPayload_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RegisterPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_register_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -962,35 +1364,6 @@ func (ec *executionContext) fieldContext_PageInfo_hasNextPage(_ context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_PageInfo_endCursor,
-		func(ctx context.Context) (any, error) {
-			return obj.EndCursor, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_PageInfo_endCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PageInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1021,10 +1394,14 @@ func (ec *executionContext) fieldContext_Query_todos(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "listName":
+				return ec.fieldContext_TodoConnection_listName(ctx, field)
 			case "edges":
 				return ec.fieldContext_TodoConnection_edges(ctx, field)
 			case "pageInfo":
 				return ec.fieldContext_TodoConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_TodoConnection_totalCount(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TodoConnection", field.Name)
 		},
@@ -1205,6 +1582,41 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegisterPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.RegisterPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RegisterPayload_user,
+		func(ctx context.Context) (any, error) {
+			return obj.User, nil
+		},
+		nil,
+		ec.marshalNUser2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐUser,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RegisterPayload_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegisterPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Username":
+				return ec.fieldContext_User_Username(ctx, field)
+			case "ID":
+				return ec.fieldContext_User_ID(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -1408,10 +1820,10 @@ func (ec *executionContext) fieldContext_Todo_creator(_ context.Context, field g
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_User_name(ctx, field)
-			case "displayName":
-				return ec.fieldContext_User_displayName(ctx, field)
+			case "Username":
+				return ec.fieldContext_User_Username(ctx, field)
+			case "ID":
+				return ec.fieldContext_User_ID(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -1454,6 +1866,35 @@ func (ec *executionContext) fieldContext_Todo_todoList(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _TodoConnection_listName(ctx context.Context, field graphql.CollectedField, obj *model.TodoConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TodoConnection_listName,
+		func(ctx context.Context) (any, error) {
+			return obj.ListName, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TodoConnection_listName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TodoConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TodoConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.TodoConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1480,8 +1921,6 @@ func (ec *executionContext) fieldContext_TodoConnection_edges(_ context.Context,
 			switch field.Name {
 			case "node":
 				return ec.fieldContext_TodoEdge_node(ctx, field)
-			case "cursor":
-				return ec.fieldContext_TodoEdge_cursor(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TodoEdge", field.Name)
 		},
@@ -1515,10 +1954,37 @@ func (ec *executionContext) fieldContext_TodoConnection_pageInfo(_ context.Conte
 			switch field.Name {
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TodoConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.TodoConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TodoConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TodoConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TodoConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1566,35 +2032,6 @@ func (ec *executionContext) fieldContext_TodoEdge_node(_ context.Context, field 
 				return ec.fieldContext_Todo_todoList(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Todo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TodoEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.TodoEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TodoEdge_cursor,
-		func(ctx context.Context) (any, error) {
-			return obj.Cursor, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TodoEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TodoEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1716,6 +2153,53 @@ func (ec *executionContext) fieldContext_TodoTag_displayName(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateTodoPayload_todo(ctx context.Context, field graphql.CollectedField, obj *model.UpdateTodoPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateTodoPayload_todo,
+		func(ctx context.Context) (any, error) {
+			return obj.Todo, nil
+		},
+		nil,
+		ec.marshalNTodo2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐTodo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateTodoPayload_todo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateTodoPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Todo_name(ctx, field)
+			case "title":
+				return ec.fieldContext_Todo_title(ctx, field)
+			case "content":
+				return ec.fieldContext_Todo_content(ctx, field)
+			case "status":
+				return ec.fieldContext_Todo_status(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Todo_dueDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Todo_createdAt(ctx, field)
+			case "creator":
+				return ec.fieldContext_Todo_creator(ctx, field)
+			case "todoList":
+				return ec.fieldContext_Todo_todoList(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Todo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateTodoStatusPayload_todo(ctx context.Context, field graphql.CollectedField, obj *model.UpdateTodoStatusPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1763,43 +2247,14 @@ func (ec *executionContext) fieldContext_UpdateTodoStatusPayload_todo(_ context.
 	return fc, nil
 }
 
-func (ec *executionContext) _User_name(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_Username(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_User_name,
+		ec.fieldContext_User_Username,
 		func(ctx context.Context) (any, error) {
-			return obj.Name, nil
-		},
-		nil,
-		ec.marshalNResourceName2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋscalarᚐResourceName,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_User_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ResourceName does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_displayName(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_User_displayName,
-		func(ctx context.Context) (any, error) {
-			return obj.DisplayName, nil
+			return obj.Username, nil
 		},
 		nil,
 		ec.marshalNString2string,
@@ -1808,7 +2263,7 @@ func (ec *executionContext) _User_displayName(ctx context.Context, field graphql
 	)
 }
 
-func (ec *executionContext) fieldContext_User_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_Username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -1816,6 +2271,35 @@ func (ec *executionContext) fieldContext_User_displayName(_ context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_ID(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_ID,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_ID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3325,6 +3809,80 @@ func (ec *executionContext) unmarshalInputCreateTodoInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputLoginInput(ctx context.Context, obj any) (model.LoginInput, error) {
+	var it model.LoginInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"username", "password"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "username":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Username = data
+		case "password":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Password = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRegisterInput(ctx context.Context, obj any) (model.RegisterInput, error) {
+	var it model.RegisterInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"username", "password"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "username":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Username = data
+		case "password":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Password = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputTodosInput(ctx context.Context, obj any) (model.TodosInput, error) {
 	var it model.TodosInput
 	if obj == nil {
@@ -3357,6 +3915,57 @@ func (ec *executionContext) unmarshalInputTodosInput(ctx context.Context, obj an
 				return it, err
 			}
 			it.Offset = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateTodoInput(ctx context.Context, obj any) (model.UpdateTodoInput, error) {
+	var it model.UpdateTodoInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"title", "content", "status", "dueDate"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "content":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Content = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOTodoStatus2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐTodoStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "dueDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dueDate"))
+			data, err := ec.unmarshalOTime2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋscalarᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DueDate = data
 		}
 	}
 	return it, nil
@@ -3448,6 +4057,84 @@ func (ec *executionContext) _DeleteTodoPayload(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var loginPayloadImplementors = []string{"LoginPayload"}
+
+func (ec *executionContext) _LoginPayload(ctx context.Context, sel ast.SelectionSet, obj *model.LoginPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, loginPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LoginPayload")
+		case "user":
+			out.Values[i] = ec._LoginPayload_user(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var logoutPayloadImplementors = []string{"LogoutPayload"}
+
+func (ec *executionContext) _LogoutPayload(ctx context.Context, sel ast.SelectionSet, obj *model.LogoutPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, logoutPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LogoutPayload")
+		case "success":
+			out.Values[i] = ec._LogoutPayload_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -3484,6 +4171,34 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateTodoStatus":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateTodoStatus(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateTodo":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateTodo(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "login":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_login(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "logout":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_logout(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "register":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_register(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -3527,8 +4242,6 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "endCursor":
-			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3623,6 +4336,45 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var registerPayloadImplementors = []string{"RegisterPayload"}
+
+func (ec *executionContext) _RegisterPayload(ctx context.Context, sel ast.SelectionSet, obj *model.RegisterPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, registerPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RegisterPayload")
+		case "user":
+			out.Values[i] = ec._RegisterPayload_user(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3784,6 +4536,11 @@ func (ec *executionContext) _TodoConnection(ctx context.Context, sel ast.Selecti
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("TodoConnection")
+		case "listName":
+			out.Values[i] = ec._TodoConnection_listName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "edges":
 			out.Values[i] = ec._TodoConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3791,6 +4548,11 @@ func (ec *executionContext) _TodoConnection(ctx context.Context, sel ast.Selecti
 			}
 		case "pageInfo":
 			out.Values[i] = ec._TodoConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._TodoConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3830,11 +4592,6 @@ func (ec *executionContext) _TodoEdge(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = graphql.MarshalString("TodoEdge")
 		case "node":
 			out.Values[i] = ec._TodoEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "cursor":
-			out.Values[i] = ec._TodoEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3949,6 +4706,45 @@ func (ec *executionContext) _TodoTag(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var updateTodoPayloadImplementors = []string{"UpdateTodoPayload"}
+
+func (ec *executionContext) _UpdateTodoPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateTodoPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateTodoPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateTodoPayload")
+		case "todo":
+			out.Values[i] = ec._UpdateTodoPayload_todo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var updateTodoStatusPayloadImplementors = []string{"UpdateTodoStatusPayload"}
 
 func (ec *executionContext) _UpdateTodoStatusPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateTodoStatusPayload) graphql.Marshaler {
@@ -3999,13 +4795,13 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("User")
-		case "name":
-			out.Values[i] = ec._User_name(ctx, field, obj)
+		case "Username":
+			out.Values[i] = ec._User_Username(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "displayName":
-			out.Values[i] = ec._User_displayName(ctx, field, obj)
+		case "ID":
+			out.Values[i] = ec._User_ID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -4416,6 +5212,55 @@ func (ec *executionContext) marshalNDeleteTodoPayload2ᚖgithubᚗcomᚋtuannguy
 	return ec._DeleteTodoPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐLoginInput(ctx context.Context, v any) (model.LoginInput, error) {
+	res, err := ec.unmarshalInputLoginInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNLoginPayload2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐLoginPayload(ctx context.Context, sel ast.SelectionSet, v model.LoginPayload) graphql.Marshaler {
+	return ec._LoginPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLoginPayload2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐLoginPayload(ctx context.Context, sel ast.SelectionSet, v *model.LoginPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LoginPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNLogoutPayload2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐLogoutPayload(ctx context.Context, sel ast.SelectionSet, v model.LogoutPayload) graphql.Marshaler {
+	return ec._LogoutPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLogoutPayload2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐLogoutPayload(ctx context.Context, sel ast.SelectionSet, v *model.LogoutPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LogoutPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -4465,6 +5310,25 @@ func (ec *executionContext) marshalNPermission2ᚕgithubᚗcomᚋtuannguyenandpa
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNRegisterInput2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐRegisterInput(ctx context.Context, v any) (model.RegisterInput, error) {
+	res, err := ec.unmarshalInputRegisterInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRegisterPayload2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐRegisterPayload(ctx context.Context, sel ast.SelectionSet, v model.RegisterPayload) graphql.Marshaler {
+	return ec._RegisterPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRegisterPayload2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐRegisterPayload(ctx context.Context, sel ast.SelectionSet, v *model.RegisterPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RegisterPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNResourceName2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋscalarᚐResourceName(ctx context.Context, v any) (scalar.ResourceName, error) {
@@ -4567,6 +5431,20 @@ func (ec *executionContext) marshalNTodoStatus2githubᚗcomᚋtuannguyenandpadco
 	return v
 }
 
+func (ec *executionContext) marshalNUpdateTodoPayload2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐUpdateTodoPayload(ctx context.Context, sel ast.SelectionSet, v model.UpdateTodoPayload) graphql.Marshaler {
+	return ec._UpdateTodoPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateTodoPayload2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐUpdateTodoPayload(ctx context.Context, sel ast.SelectionSet, v *model.UpdateTodoPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateTodoPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNUpdateTodoStatusPayload2githubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐUpdateTodoStatusPayload(ctx context.Context, sel ast.SelectionSet, v model.UpdateTodoStatusPayload) graphql.Marshaler {
 	return ec._UpdateTodoStatusPayload(ctx, sel, &v)
 }
@@ -4579,6 +5457,16 @@ func (ec *executionContext) marshalNUpdateTodoStatusPayload2ᚖgithubᚗcomᚋtu
 		return graphql.Null
 	}
 	return ec._UpdateTodoStatusPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._User(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -4832,6 +5720,14 @@ func (ec *executionContext) unmarshalOTodosInput2ᚖgithubᚗcomᚋtuannguyenand
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputTodosInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOUpdateTodoInput2ᚖgithubᚗcomᚋtuannguyenandpadcojpᚋfresher26ᚋnamᚋtodosᚑbffᚋinternalᚋhandlerᚋgraphᚋmodelᚐUpdateTodoInput(ctx context.Context, v any) (*model.UpdateTodoInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputUpdateTodoInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

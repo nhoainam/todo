@@ -27,15 +27,36 @@ type DeleteTodoPayload struct {
 	Success bool `json:"success"`
 }
 
+type LoginInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type LoginPayload struct {
+	User *User `json:"user"`
+}
+
+type LogoutPayload struct {
+	Success bool `json:"success"`
+}
+
 type Mutation struct {
 }
 
 type PageInfo struct {
-	HasNextPage bool    `json:"hasNextPage"`
-	EndCursor   *string `json:"endCursor,omitempty"`
+	HasNextPage bool `json:"hasNextPage"`
 }
 
 type Query struct {
+}
+
+type RegisterInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type RegisterPayload struct {
+	User *User `json:"user"`
 }
 
 type Todo struct {
@@ -50,13 +71,14 @@ type Todo struct {
 }
 
 type TodoConnection struct {
-	Edges    []*TodoEdge `json:"edges"`
-	PageInfo *PageInfo   `json:"pageInfo"`
+	ListName   string      `json:"listName"`
+	Edges      []*TodoEdge `json:"edges"`
+	PageInfo   *PageInfo   `json:"pageInfo"`
+	TotalCount int         `json:"totalCount"`
 }
 
 type TodoEdge struct {
-	Node   *Todo  `json:"node"`
-	Cursor string `json:"cursor"`
+	Node *Todo `json:"node"`
 }
 
 type TodoList struct {
@@ -74,13 +96,24 @@ type TodosInput struct {
 	Offset *int `json:"offset,omitempty"`
 }
 
+type UpdateTodoInput struct {
+	Title   *string      `json:"title,omitempty"`
+	Content *string      `json:"content,omitempty"`
+	Status  *TodoStatus  `json:"status,omitempty"`
+	DueDate *scalar.Time `json:"dueDate,omitempty"`
+}
+
+type UpdateTodoPayload struct {
+	Todo *Todo `json:"todo"`
+}
+
 type UpdateTodoStatusPayload struct {
 	Todo *Todo `json:"todo"`
 }
 
 type User struct {
-	Name        scalar.ResourceName `json:"name"`
-	DisplayName string              `json:"displayName"`
+	Username string `json:"Username"`
+	ID       int    `json:"ID"`
 }
 
 type Permission string

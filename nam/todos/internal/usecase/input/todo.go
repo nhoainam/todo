@@ -36,6 +36,7 @@ type TodoCreator struct {
 	DueDate   *time.Time
 	ListID    entity.TodoListID
 	CreatorID entity.UserID
+	Status    entity.TodoStatus
 }
 
 type TodoUpdater struct {
@@ -51,7 +52,7 @@ type TodoDeleter struct {
 }
 
 type TodoLister struct {
-	Name   entity.TodoResourceName
+	Name   entity.TodoListResourceName
 	Status *entity.TodoStatus
 	Limit  int32
 	Offset int32
